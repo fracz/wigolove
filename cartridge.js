@@ -1,4 +1,4 @@
-﻿function cartridgeCode({name, description, startingLocationDescription}) {
+﻿function cartridgeCode({name, description}) {
     return `require "Wherigo"
 ZonePoint = Wherigo.ZonePoint
 Distance = Wherigo.Distance
@@ -245,7 +245,7 @@ wigoLove.Name="${name}"
 wigoLove.Description=[[${description}]]
 wigoLove.Visible=true
 wigoLove.Activity="TourGuide"
-wigoLove.StartingLocationDescription=[[${startingLocationDescription}]]
+wigoLove.StartingLocationDescription=[[${description}]]
 wigoLove.StartingLocation = ZonePoint(50.04211713798001,19.826836977922483,0)
 wigoLove.Version=""
 wigoLove.Company=""
@@ -389,7 +389,7 @@ function wigoLove:OnStart()
         return
     end
     _Urwigo.MessageBox{
-        Text = ("Ahoj "..Player.Name)..[[${startingLocationDescription}]]
+        Text = ("Ahoj "..Player.Name)..[[ ${description}]]
     }
 end
 function wigoLove:OnRestore()

@@ -238,7 +238,7 @@
 
                 <div class="field">
                     <label class="label">Area</label>
-                    <a @click="editZoneArea(zone)">{{ zone.area.length }} points</a>
+                    <a @click="editZoneArea(zone)">{{ zone.area.length }} geographic points</a>
                 </div>
 
                 <div class="field">
@@ -312,6 +312,7 @@
         data() {
             return {
                 mapModalOpened: false,
+                addingZone: false,
                 editingZone: undefined,
                 currentPolygonCoords: [],
                 wigo: {
@@ -402,14 +403,9 @@
             //         });
             // },
             addZone() {
-                this.wigo.zones.push({
-                    id: crypto.randomUUID(),
-                    name: '',
-                    description: '',
-                    photo: '',
-                    points: 1,
-                    imageUrl: '',
-                    area: []
+                this.showMap().then(() => {
+                    this.addingZone = true;
+                    map.addControl(drawControl);
                 });
             },
             deleteZone(zone) {
@@ -500,8 +496,21 @@
             saveEditedZoneArea() {
                 if (this.editingZone) {
                     this.editingZone.area = this.currentPolygonCoords;
-                    this.currentPolygonCoords = undefined;
+                } else if (this.addingZone) {
+                    if (this.currentPolygonCoords && this.currentPolygonCoords.length > 2) {
+                        this.wigo.zones.push({
+                            id: crypto.randomUUID(),
+                            name: '',
+                            description: '',
+                            photo: '',
+                            points: 1,
+                            imageUrl: '',
+                            area: this.currentPolygonCoords
+                        });
+                    }
                 }
+                this.currentPolygonCoords = undefined;
+                this.addingZone = undefined;
                 this.editingZone = undefined;
                 this.mapModalOpened = false;
                 this.saveInLocalStorage();
@@ -511,6 +520,7 @@
             },
             showMap(withFit = true) {
                 this.editingZone = undefined;
+                this.addingZone = false;
                 this.mapModalOpened = true;
                 const mapReady = new Promise((resolve) => {
                     if (!map) {
@@ -586,7 +596,7 @@
                 });
 
                 map.on('click', (e) => {
-                    if (!this.editingZone) {
+                    if (!this.editingZone && !this.addingZone) {
                         this.wigo.startCoordinates = e.latlng;
                         this.updateMarker();
                     }

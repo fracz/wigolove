@@ -89,6 +89,7 @@ objLoveZone${zoneCounter}.ShowObjects = "OnEnter"
 objLoveZone${zoneCounter}.ProximityRange = Distance(60, "meters")
 objLoveZone${zoneCounter}.AllowSetPositionTo = false
 objLoveZone${zoneCounter}.Active = true
+${zone.imageUrl ? `objLoveZone${zoneCounter}.Media = objLoveImage${zoneCounter}` : ''}
 objLoveZone${zoneCounter}.Points = {
     ${zonePoints.join(', ')}
 }
@@ -114,9 +115,9 @@ objLoveTask${zoneCounter}.CorrectState = "None"
 function objLoveZone${zoneCounter}:OnEnter()
     currentZone = "objLoveZone${zoneCounter}"
     if objLoveZone${zoneCounter}.Visible == false then
-        objLoveTask${zoneCounter}.Visible = true
-        objLoveTask${zoneCounter}.Complete = true
-        objLoveZone${zoneCounter}.Visible = false
+--        objLoveTask${zoneCounter}.Visible = true
+--        objLoveTask${zoneCounter}.Complete = true
+        objLoveZone${zoneCounter}.Visible = true
         _Urwigo.MessageBox{
             Text = [[${zone.name}
 ]]..[[${zone.description}
@@ -450,7 +451,7 @@ objZivoty.Locked = false
 objZivoty.Opened = false
 
 -- Tasks --
-${taskCode}
+--$ {taskCode}
 
 -- Cartridge Variables --
 -- objPamatky = 15
@@ -460,7 +461,7 @@ objdead = true
 currentZone = "objLoveZone1"
 currentCharacter = "dummy"
 currentItem = "objHowManyLeft"
-currentTask = "objLoveTask1"
+--currentTask = "objLoveTask1"
 -- currentInput = "objDulHlubina2"
 currentTimer = "dummy"
 wigoLove.ZVariables = {
@@ -470,7 +471,7 @@ wigoLove.ZVariables = {
     currentZone = "objLoveZone1", 
     currentCharacter = "dummy", 
     currentItem = "objHowManyLeft", 
-    currentTask = "objLoveTask1", 
+--    currentTask = "objLoveTask1", 
 --    currentInput = "objDulHlubina2", 
     currentTimer = "dummy"
 }

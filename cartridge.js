@@ -1,10 +1,46 @@
-﻿function cartridgeCode({name, description, zones}) {
+﻿function cartridgeCode({name, description, zones, requiredPoints, hint, spoilerUrl, coverUrl}, locale) {
 
     let zoneCode = '';
     let taskCode = '';
     let functionsCode = '';
     let mediaCode = '';
     let zoneCounter = 0;
+
+    if (coverUrl) {
+        const mediaId = crypto.randomUUID();
+        mediaCode += `
+objLoveCover = Wherigo.ZMedia(wigoLove)
+objLoveCover.Id = "${mediaId}"
+objLoveCover.Name = [[${name}]]
+objLoveCover.Description = ""
+objLoveCover.AltText = ""
+objLoveCover.Resources = {
+    {
+        Type = "jpg", 
+        Filename = "cover.jpg", 
+        Directives = {}
+    }
+}
+`;
+    }
+
+    if (spoilerUrl) {
+        const mediaId = crypto.randomUUID();
+        mediaCode += `
+objLoveSpoiler = Wherigo.ZMedia(wigoLove)
+objLoveSpoiler.Id = "${mediaId}"
+objLoveSpoiler.Name = [[${locale.spoiler}]]
+objLoveSpoiler.Description = ""
+objLoveSpoiler.AltText = ""
+objLoveSpoiler.Resources = {
+    {
+        Type = "jpg", 
+        Filename = "psikus.jpg", 
+        Directives = {}
+    }
+}
+`;
+    }
 
     for (let zone of zones) {
         zoneCounter++;
@@ -32,8 +68,9 @@ objLoveImage${zoneCounter}.Resources = {
         zoneCode += `
 objLoveZone${zoneCounter} = Wherigo.Zone(wigoLove)
 objLoveZone${zoneCounter}.Id = "${zone.id}"
-objLoveZone${zoneCounter}.Name = "${zone.name}"
-objLoveZone${zoneCounter}.Description = [[${zone.description}]]
+objLoveZone${zoneCounter}.Name = [[${zone.name}]]
+objLoveZone${zoneCounter}.Description = [[${zone.description}
+]]..[[${locale.worthPoints.replace('%', zone.points)}]]
 objLoveZone${zoneCounter}.Visible = false
 objLoveZone${zoneCounter}.Commands = {}
 objLoveZone${zoneCounter}.DistanceRange = Distance(-1, "feet")
@@ -53,8 +90,9 @@ objLoveZone${zoneCounter}.InRangeName = ""
         taskCode += `
 objLoveTask${zoneCounter} = Wherigo.ZTask(wigoLove)
 objLoveTask${zoneCounter}.Id = "${taskId}"
-objLoveTask${zoneCounter}.Name = "${zone.name}"
-objLoveTask${zoneCounter}.Description = [[${zone.description}]]
+objLoveTask${zoneCounter}.Name = [[${zone.name}]]
+objLoveTask${zoneCounter}.Description = [[${zone.description}
+]]..[[${locale.worthPoints.replace('%', zone.points)}]]
 objLoveTask${zoneCounter}.Visible = false
 ${zone.imageUrl ? `objLoveTask${zoneCounter}.Media = objLoveImage${zoneCounter}` : ''}
 objLoveTask${zoneCounter}.Active = true
@@ -72,18 +110,14 @@ function objLoveZone${zoneCounter}:OnEnter()
         ${zone.imageUrl ? `Media = objLoveImage${zoneCounter},` : ''}
         Callback = function(action)
             if action ~= nil then
-                objPamatky = objPamatky + -1
-                if objPamatky == 0 then
-                    if obj15 > 0 then
-                        Wherigo.ShowScreen(Wherigo.MAINSCREEN)
-                    else
-                        objFinito()
-                    end
+                objPamatky = objPamatky + -${zone.points}
+                if objPamatky <= 0 then
+                    objFinito()
                 else
                     _Urwigo.MessageBox{
-                        Text = ("ZOstalo jeszcze "..objPamatky)..[[ stref do odkrycia.
-Tak pojd najit dalsi! :)]], 
---                        Media = objiloveOSTRAVA, 
+                        Text = [[${locale.worthPoints.replace('%', zone.points)}
+]]..[[${locale.howManyLeftContent.split('%')[0]}]]..objPamatky..[[${locale.howManyLeftContent.split('%')[1]}]], 
+                        ${ coverUrl ? 'Media = objLoveCover,' : ''} 
                         Callback = function(action)
                             if action ~= nil then
                                 Wherigo.ShowScreen(Wherigo.MAINSCREEN)
@@ -97,6 +131,8 @@ Tak pojd najit dalsi! :)]],
 end
 `;
     }
+
+    const finalDescription = `[[${locale.finalContent.split('%')[0]}]].."N 49° 49.826 E 018°17.880"..[[${locale.finalContent.split('%')[1]}]]..[[${hint ? locale.hint + ': ' + hint : ''}]]`;
 
     return `require "Wherigo"
 ZonePoint = Wherigo.ZonePoint
@@ -348,8 +384,8 @@ wigoLove.CountryId="2"
 wigoLove.Complete=false
 wigoLove.UseLogging=true
 
--- wigoLove.Media=objiloveOSTRAVA
--- wigoLove.Icon=objiloveOSTRAVA
+${ coverUrl ? 'wigoLove.Media=objLoveCover' : ''}
+${ coverUrl ? 'wigoLove.Icon=objLoveCover' : ''}
 
 
 -- Zones --
@@ -361,7 +397,7 @@ objHowManyLeft = Wherigo.ZItem{
     Container = Player
 }
 objHowManyLeft.Id = "accb593c-d43b-46d7-853b-9d7112bc36e1"
-objHowManyLeft.Name = "Kolik jeste?"
+objHowManyLeft.Name = [[${locale.howManyLeftTitle}]]
 objHowManyLeft.Description = ""
 objHowManyLeft.Visible = true
 objHowManyLeft.Icon = obj
@@ -372,12 +408,11 @@ objHowManyLeft.Opened = false
 
 objFotohint = Wherigo.ZItem(wigoLove)
 objFotohint.Id = "47b8b44c-db97-4116-a743-cc129c7427ff"
-objFotohint.Name = "Fotohint"
-objFotohint.Description = [[Schranka je ukryta na souradnicich N 49° 49. 826 a E 018°17.880
-Hint: Ve svahu, pod cyklostezkou. LEVÁ strana betonu o rozměrech 60 x 30 x 30 cm.  Vyjmi krytku z nápoje v plechovce a vytáhni tubu z díry v betonu. Nehledej ve sloupku!!!]]
+objFotohint.Name = [[${locale.finalTitle}]]
+objFotohint.Description = ${finalDescription}
 objFotohint.Visible = true
--- objFotohint.Media = obj
--- objFotohint.Icon = obj
+${ spoilerUrl ? 'objFotohint.Media = objLoveSpoiler' : ''}
+${ spoilerUrl ? 'objFotohint.Icon = objLoveSpoiler' : ''}
 objFotohint.Commands = {}
 objFotohint.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objFotohint.Locked = false
@@ -401,8 +436,7 @@ ${taskCode}
 
 -- Cartridge Variables --
 -- objPamatky = 15
-objPamatky = 1
-obj15 = 0
+objPamatky = ${requiredPoints}
 objzivoty = 3
 objdead = true
 currentZone = "objLoveZone1"
@@ -412,8 +446,7 @@ currentTask = "objLoveTask1"
 -- currentInput = "objDulHlubina2"
 currentTimer = "dummy"
 wigoLove.ZVariables = {
-    objPamatky = 15, 
-    obj15 = 0, 
+    objPamatky = ${requiredPoints}, 
     objzivoty = 3, 
     objdead = true, 
     currentZone = "objLoveZone1", 
@@ -442,7 +475,9 @@ function wigoLove:OnStart()
         return
     end
     _Urwigo.MessageBox{
-        Text = ("Ahoj "..Player.Name)..[[ ${description}]]
+        Text = [[${locale.welcome.split('%')[0]}]]..Player.Name..[[${locale.welcome.split('%')[1]}]]..[[
+
+${description}]]
     }
 end
 function wigoLove:OnRestore()
@@ -453,8 +488,8 @@ ${functionsCode}
 
 function objHowManyLeft:OnClick()
     _Urwigo.MessageBox{
-        Text = ("Jeste ti zbyva "..objPamatky).." pamatek.", 
-        Media = objiloveOSTRAVA, 
+        Text = [[${locale.howManyLeftContent.split('%')[0]}]]..objPamatky..[[${locale.howManyLeftContent.split('%')[1]}]], 
+        ${coverUrl ? 'Media = objLoveCover,' : ''} 
         Callback = function(action)
             if action ~= nil then
                 Wherigo.ShowScreen(Wherigo.MAINSCREEN)
@@ -465,9 +500,8 @@ end
 
 function objFotohint:OnClick()
     _Urwigo.MessageBox{
-        Text = [[Schranka je ukryta na souradnicich N 49° 49. 826 a E 018°17.880
-Hint: Ve svahu, pod cyklostezkou. LEVÁ strana betonu o rozměrech 60 x 30 x 30 cm.  Vyjmi krytku z nápoje v plechovce a vytáhni tubu z díry v betonu. Nehledej ve sloupku!!!]], 
-        Media = obj, 
+        Text = ${finalDescription},
+        ${spoilerUrl ? 'Media = objLoveSpoiler,' : ''} 
         Callback = function(action)
             if action ~= nil then
                 Wherigo.ShowScreen(Wherigo.INVENTORYSCREEN)
@@ -499,9 +533,8 @@ function objFinito()
         }
     else
         objFotohint:MoveTo(Player)
-        obj15 = obj15 + 0
         _Urwigo.MessageBox{
-            Text = "Vyborne! Nasel jsi 15 ostravskych pamatek! Ted ti ukazu kde je finalni keska.", 
+            Text = [[${locale.finalSuccessMessage}]], 
             Callback = function(action)
                 if action ~= nil then
                     objFotohint:OnClick()

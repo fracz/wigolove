@@ -28,6 +28,7 @@
             integrity="sha512-+BMamP0e7wn39JGL8nKAZ3yAQT2dL5oaXWr4ZYlTGkKOaoXM/Yj7c4oy50Ngz5yoUutAG17flueD4F6QpTlPng=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <link rel="stylesheet" href="style.css"/>
+    <script type="text/javascript" src="lang.js"></script>
     <script type="text/javascript" src="cartridge.js"></script>
 </head>
 <body>
@@ -63,7 +64,63 @@
             </div>
         </div>
 
+        <div class="field">
+            <label class="label">Cover image / icon</label>
+            <div class="file">
+                <label class="file-label">
+                    <input class="file-input" type="file" accept="image/png, image/gif, image/jpeg"
+                           @change="(e) => onCoverChange(e)">
+                    <span class="file-cta">
+                          <span class="file-label">Choose a file…</span>
+                        </span>
+                </label>
+            </div>
+            <div v-if="wigo.coverUrl">
+                <div class="my-3">
+                    <img :src="wigo.coverUrl" class="img-preview">
+                </div>
+                <button class="button is-small" type="button" @click="deleteCoverImage()">
+                    Delete cover image
+                </button>
+            </div>
+        </div>
+
         <a @click="showMap()">Show map of all zones</a>
+
+        <div class="card my-5">
+            <div class="card-content">
+                <h2 class="title">Final geocache</h2>
+                <div class="field">
+                    <label class="label">Hint</label>
+                    <div class="control">
+                        <textarea class="textarea" v-model="wigo.hint" @blur="saveInLocalStorage()"></textarea>
+                    </div>
+                    <p class="help">
+                        It will be displayed for the user after completing the scenario.
+                    </p>
+                </div>
+                <div class="field">
+                    <label class="label">Spoiler</label>
+                    <div class="file">
+                        <label class="file-label">
+                            <input class="file-input" type="file" accept="image/png, image/gif, image/jpeg"
+                                   @change="(e) => onSpoilerChange(e)">
+                            <span class="file-cta">
+                          <span class="file-label">Choose a file…</span>
+                        </span>
+                        </label>
+                    </div>
+                    <div v-if="wigo.spoilerUrl">
+                        <div class="my-3">
+                            <img :src="wigo.spoilerUrl" class="img-preview">
+                        </div>
+                        <button class="button is-small" type="button" @click="deleteSpoilerImage()">Delete spoiler
+                            image
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <div v-for="zone in wigo.zones" :key="zone.id" class="my-5 card">
             <div class="card-content">
@@ -87,6 +144,14 @@
                 </div>
 
                 <div class="field">
+                    <label class="label">Number of points for collecting this zone</label>
+                    <div class="control">
+                        <input type="number" class="input" v-model="zone.points" max="5" min="1"
+                               @blur="saveInLocalStorage()">
+                    </div>
+                </div>
+
+                <div class="field">
                     <label class="label">Area</label>
                     <a @click="editZoneArea(zone)">{{ zone.area.length }} points</a>
                 </div>
@@ -102,8 +167,11 @@
                         </span>
                         </label>
                     </div>
-                    <div class="mt-3">
-                        <img v-if="zone.imageUrl" :src="zone.imageUrl" class="img-preview"/>
+                    <div v-if="zone.imageUrl">
+                        <div class="my-3">
+                            <img v-if="zone.imageUrl" :src="zone.imageUrl" class="img-preview">
+                        </div>
+                        <button class="button is-small" type="button" @click="deleteImage(zone)">Delete image</button>
                     </div>
                 </div>
             </div>
@@ -134,7 +202,7 @@
 </section>
 
 <script>
-    const {createApp} = Vue
+    const {createApp} = Vue;
     let map;
     let editableLayers;
     let nonEditableLayers;
@@ -151,8 +219,10 @@
                     name: 'I love Krakow',
                     description: '',
                     requiredPoints: 15,
+                    hint: 'The hint for the final',
+                    spoilerUrl: '',
+                    coverUrl: '',
                     zones: [],
-                    imageUrl: '',
                 }
             }
         },
@@ -171,6 +241,7 @@
                     description: '',
                     photo: '',
                     points: 1,
+                    imageUrl: '',
                     area: []
                 });
             },
@@ -180,36 +251,64 @@
                     this.saveInLocalStorage();
                 }
             },
-            onFileChange(zone, e) {
-                const FR = new FileReader();
-                FR.addEventListener("load", (readerEvent) => {
-                    var image = new Image();
-                    image.onload = () => {
-                        let canvas = document.createElement('canvas'),
-                            max_size = 800,
-                            width = image.width,
-                            height = image.height;
-                        if (width > height) {
-                            if (width > max_size) {
-                                height *= max_size / width;
-                                width = max_size;
+            prepareImage(e) {
+                return new Promise((resolve) => {
+                    const FR = new FileReader();
+                    FR.addEventListener("load", (readerEvent) => {
+                        var image = new Image();
+                        image.onload = () => {
+                            let canvas = document.createElement('canvas'),
+                                max_size = 800,
+                                width = image.width,
+                                height = image.height;
+                            if (width > height) {
+                                if (width > max_size) {
+                                    height *= max_size / width;
+                                    width = max_size;
+                                }
+                            } else {
+                                if (height > max_size) {
+                                    width *= max_size / height;
+                                    height = max_size;
+                                }
                             }
-                        } else {
-                            if (height > max_size) {
-                                width *= max_size / height;
-                                height = max_size;
-                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            canvas.getContext('2d').drawImage(image, 0, 0, width, height);
+                            const dataUrl = canvas.toDataURL('image/jpeg');
+                            resolve(dataUrl);
                         }
-                        canvas.width = width;
-                        canvas.height = height;
-                        canvas.getContext('2d').drawImage(image, 0, 0, width, height);
-                        const dataUrl = canvas.toDataURL('image/jpeg');
-                        zone.imageUrl = dataUrl;
-                        this.saveInLocalStorage();
-                    }
-                    image.src = readerEvent.target.result;
+                        image.src = readerEvent.target.result;
+                    });
+                    FR.readAsDataURL(e.target.files[0]);
                 });
-                FR.readAsDataURL(e.target.files[0]);
+            },
+            onFileChange(zone, e) {
+                this.prepareImage(e)
+                    .then(imageUrl => zone.imageUrl = imageUrl)
+                    .then(() => this.saveInLocalStorage());
+            },
+            deleteImage(zone) {
+                zone.imageUrl = '';
+                this.saveInLocalStorage();
+            },
+            onSpoilerChange(e) {
+                this.prepareImage(e)
+                    .then(imageUrl => this.wigo.spoilerUrl = imageUrl)
+                    .then(() => this.saveInLocalStorage());
+            },
+            deleteSpoilerImage() {
+                this.wigo.spoilerUrl = '';
+                this.saveInLocalStorage();
+            },
+            onCoverChange(e) {
+                this.prepareImage(e)
+                    .then(imageUrl => this.wigo.coverUrl = imageUrl)
+                    .then(() => this.saveInLocalStorage());
+            },
+            deleteCoverImage() {
+                this.wigo.coverUrl = '';
+                this.saveInLocalStorage();
             },
             editZoneArea(zone) {
                 this.editingZone = zone;
@@ -311,13 +410,21 @@
             },
             downloadGwz() {
                 const zip = new JSZip();
-                zip.file("_cartridge.lua", cartridgeCode(this.wigo));
+                zip.file("_cartridge.lua", cartridgeCode(this.wigo, locale.EN));
                 // var img = zip.folder("images");
                 for (let zone of this.wigo.zones) {
                     if (zone.imageUrl) {
                         const imageData = zone.imageUrl.split(',')[1];
                         zip.file(`${zone.id}.jpg`, imageData, {base64: true});
                     }
+                }
+                if (this.wigo.spoilerUrl) {
+                    const imageData = this.wigo.spoilerUrl.split(',')[1];
+                    zip.file(`psikus.jpg`, imageData, {base64: true});
+                }
+                if (this.wigo.coverUrl) {
+                    const imageData = this.wigo.coverUrl.split(',')[1];
+                    zip.file(`cover.jpg`, imageData, {base64: true});
                 }
                 zip.generateAsync({type: "blob"})
                     .then(function (content) {

@@ -32,7 +32,7 @@
         <div class="field">
             <label class="label">Name</label>
             <div class="control">
-                <input class="input" type="text" v-model="wigo.name">
+                <input class="input" type="text" v-model="wigo.name" @blur="saveInLocalStorage()">
             </div>
             <p class="help">Try not to use diacritic characters here.</p>
         </div>
@@ -40,7 +40,7 @@
         <div class="field">
             <label class="label">Description</label>
             <div class="control">
-                <textarea class="textarea" v-model="wigo.description"></textarea>
+                <textarea class="textarea" v-model="wigo.description" @blur="saveInLocalStorage()"></textarea>
             </div>
             <p class="help">
                 It will be used as the scenario description and it will be displayed as the first message for
@@ -51,7 +51,8 @@
         <div class="field">
             <label class="label">The number of points required to finish the game</label>
             <div class="control">
-                <input class="input" type="number" v-model="wigo.requiredPoints" min="1" max="1000">
+                <input class="input" type="number" v-model="wigo.requiredPoints" min="1" max="1000"
+                       @blur="saveInLocalStorage()">
             </div>
         </div>
 
@@ -61,7 +62,7 @@
             <div class="field">
                 <label class="label">Name</label>
                 <div class="control">
-                    <input class="input" type="text" v-model="zone.name">
+                    <input class="input" type="text" v-model="zone.name" @blur="saveInLocalStorage()">
                 </div>
                 <p class="help">Try not to use diacritic characters here.</p>
             </div>
@@ -69,7 +70,7 @@
             <div class="field">
                 <label class="label">Description</label>
                 <div class="control">
-                    <textarea class="textarea" v-model="zone.description"></textarea>
+                    <textarea class="textarea" v-model="zone.description" @blur="saveInLocalStorage()"></textarea>
                 </div>
             </div>
 
@@ -112,42 +113,15 @@
                     name: 'I love Krakow',
                     description: '',
                     requiredPoints: 15,
-                    zones: [
-                        {
-                            id: crypto.randomUUID(),
-                            name: 'Wawel',
-                            description: '',
-                            photo: '',
-                            points: 1,
-                            area: [
-                                {"lat": 50.05542014848552, "lng": 19.936496893877756},
-                                {"lat": 50.05489662647379, "lng": 19.933502675667224},
-                                {"lat": 50.05349135493584, "lng": 19.93292314956196},
-                                {"lat": 50.05320202921635, "lng": 19.933738778895275},
-                                {"lat": 50.052564817611, "lng": 19.935164479758797},
-                                {"lat": 50.05360157379869, "lng": 19.936400306193544},
-                                {"lat": 50.054214661602614, "lng": 19.937655946088285},
-                                {"lat": 50.054979288223805, "lng": 19.93763448215845}
-                            ]
-                        },
-                        {
-                            id: crypto.randomUUID(),
-                            name: 'Sukiennice',
-                            description: '',
-                            photo: '',
-                            points: 1,
-                            area: [
-                                {"lat": 50.062247799011715, "lng": 19.937401292674487},
-                                {"lat": 50.06136275612953, "lng": 19.93666078709555},
-                                {"lat": 50.06110791585173, "lng": 19.93719201935869},
-                                {"lat": 50.06207905668699, "lng": 19.938007648692047},
-                            ]
-                        },
-                    ],
+                    zones: [],
                 }
             }
         },
         mounted() {
+            const wigo = localStorage.getItem('wigo');
+            if (wigo) {
+                this.wigo = JSON.parse(wigo);
+            }
         },
         methods: {
             addZone() {
@@ -179,6 +153,10 @@
                 this.currentPolygonCoords = undefined;
                 this.editingZone = undefined;
                 this.mapModalOpened = false;
+                this.saveInLocalStorage();
+            },
+            saveInLocalStorage() {
+                localStorage.setItem('wigo', JSON.stringify(this.wigo));
             },
             showMap(withFit = true) {
                 this.mapModalOpened = true;

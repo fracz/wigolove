@@ -85,11 +85,78 @@
             </div>
         </div>
 
-        <a @click="showMap()">Show map of all zones</a>
+        <div class="field">
+            <label class="label">Starting point</label>
+            <div>
+                <a @click="showMap()">{{ wigo.startCoordinates.lat }}, {{ wigo.startCoordinates.lng }}</a>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label">Language of messages and buttons</label>
+            <div class="select">
+                <select v-model="wigo.localeCode" @change="saveInLocalStorage()">
+                    <option v-for="locale in availableLocales" :key="locale">{{ locale }}</option>
+                </select>
+            </div>
+        </div>
 
         <div class="card my-5">
             <div class="card-content">
                 <h2 class="title">Final geocache</h2>
+                <p class="mb-3">
+                    {{ wigo.finalLat.letter }} {{ wigo.finalLat.first }}&deg; {{ pad(wigo.finalLat.second, 2)
+                    }}.{{ pad(wigo.finalLat.third, 3) }}'
+                    {{ wigo.finalLng.letter }} {{ wigo.finalLng.first }}&deg; {{ pad(wigo.finalLng.second, 2)
+                    }}.{{ pad(wigo.finalLng.third, 3) }}'
+                </p>
+                <div class="field">
+                    <label class="label">Latitude</label>
+                    <div class="field-body">
+                        <button class="button mr-2" type="button"
+                                @click="wigo.finalLat.letter = wigo.finalLat.letter === 'N' ? 'S' : 'N'">
+                            {{ wigo.finalLat.letter }}
+                        </button>
+                        <div class="field is-flex-grow-0">
+                            <input class="input" type="number" v-model="wigo.finalLat.first" min="0" max="90"
+                                   style="width: 100px" @blur="saveInLocalStorage()">
+                        </div>
+                        <div class="field is-flex-grow-0">
+                            <input class="input" v-model="wigo.finalLat.second" type="number" style="width: 100px"
+                                   @blur="saveInLocalStorage()">
+                        </div>
+                        <div class="field is-flex-grow-0">
+                            <p class="control">
+                                <input class="input" v-model="wigo.finalLat.third" type="number" style="width: 100px"
+                                       @blur="saveInLocalStorage()">
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">Longitude</label>
+                    <div class="field-body">
+                        <button class="button mr-2" type="button"
+                                @click="wigo.finalLng.letter = wigo.finalLng.letter === 'E' ? 'W' : 'E'">
+                            {{ wigo.finalLng.letter }}
+                        </button>
+                        <div class="field is-flex-grow-0">
+                            <input class="input" type="number" v-model="wigo.finalLng.first" min="0" max="180"
+                                   style="width: 100px" @blur="saveInLocalStorage()">
+                        </div>
+                        <div class="field is-flex-grow-0">
+                            <input class="input" v-model="wigo.finalLng.second" type="number" style="width: 100px"
+                                   @blur="saveInLocalStorage()">
+                        </div>
+                        <div class="field is-flex-grow-0">
+                            <p class="control">
+                                <input class="input" v-model="wigo.finalLng.third" type="number" style="width: 100px"
+                                       @blur="saveInLocalStorage()">
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="field">
                     <label class="label">Hint</label>
                     <div class="control">
@@ -208,6 +275,7 @@
     let nonEditableLayers;
     let drawControl;
     let drawEditControl;
+    let marker;
 
     createApp({
         data() {
@@ -222,6 +290,10 @@
                     hint: 'The hint for the final',
                     spoilerUrl: '',
                     coverUrl: '',
+                    startCoordinates: {lat: 50, lng: 19},
+                    finalLat: {letter: 'N', first: 50, second: 40, third: 333},
+                    finalLng: {letter: 'E', first: 19, second: 48, third: 888},
+                    localeCode: 'EN',
                     zones: [],
                 }
             }
@@ -310,10 +382,16 @@
                 this.wigo.coverUrl = '';
                 this.saveInLocalStorage();
             },
+            updateMarker() {
+                if (marker) {
+                    marker.remove();
+                }
+                marker = L.marker(this.wigo.startCoordinates || [50, 19]).addTo(map);
+            },
             editZoneArea(zone) {
-                this.editingZone = zone;
-                this.currentPolygonCoords = zone.area;
                 this.showMap(zone.area.length === 0).then(() => {
+                    this.editingZone = zone;
+                    this.currentPolygonCoords = zone.area;
                     if (zone.area.length) {
                         const polygon = L.polygon(zone.area);
                         editableLayers.addLayer(polygon);
@@ -325,8 +403,10 @@
                 });
             },
             saveEditedZoneArea() {
-                this.editingZone.area = this.currentPolygonCoords;
-                this.currentPolygonCoords = undefined;
+                if (this.editingZone) {
+                    this.editingZone.area = this.currentPolygonCoords;
+                    this.currentPolygonCoords = undefined;
+                }
                 this.editingZone = undefined;
                 this.mapModalOpened = false;
                 this.saveInLocalStorage();
@@ -335,6 +415,7 @@
                 localforage.setItem('wigo', JSON.stringify(this.wigo));
             },
             showMap(withFit = true) {
+                this.editingZone = undefined;
                 this.mapModalOpened = true;
                 const mapReady = new Promise((resolve) => {
                     if (!map) {
@@ -355,6 +436,7 @@
                     const bg = L.polygon(this.wigo.zones.map(z => z.area));
                     bg.setStyle({color: '#FFFF00', fillColor: '#FFFF00'});
                     nonEditableLayers.addLayer(bg);
+                    this.updateMarker();
                     if (withFit) {
                         map.fitBounds(bg.getBounds());
                     }
@@ -407,10 +489,17 @@
                         console.log(this.currentPolygonCoords);
                     });
                 });
+
+                map.on('click', (e) => {
+                    if (!this.editingZone) {
+                        this.wigo.startCoordinates = e.latlng;
+                        this.updateMarker();
+                    }
+                });
             },
             downloadGwz() {
                 const zip = new JSZip();
-                zip.file("_cartridge.lua", cartridgeCode(this.wigo, locale.EN));
+                zip.file("_cartridge.lua", cartridgeCode(this.wigo, locale[this.wigo.localeCode || 'EN']));
                 // var img = zip.folder("images");
                 for (let zone of this.wigo.zones) {
                     if (zone.imageUrl) {
@@ -431,6 +520,15 @@
                         // see FileSaver.js
                         saveAs(content, "i_love_wigo.gwz");
                     });
+            },
+            pad(num, size) {
+                const s = "000000000" + num;
+                return s.substring(s.length - size);
+            },
+        },
+        computed: {
+            availableLocales() {
+                return Object.keys(locale);
             }
         }
     }).mount('#app');

@@ -1,4 +1,15 @@
-﻿function cartridgeCode({name, description, zones, requiredPoints, hint, spoilerUrl, coverUrl}, locale) {
+﻿function cartridgeCode({
+                           name,
+                           description,
+                           zones,
+                           requiredPoints,
+                           hint,
+                           spoilerUrl,
+                           coverUrl,
+                           startCoordinates,
+                           finalLat,
+                           finalLng
+                       }, locale) {
 
     let zoneCode = '';
     let taskCode = '';
@@ -106,7 +117,8 @@ function objLoveZone${zoneCounter}:OnEnter()
     objLoveTask${zoneCounter}.Complete = true
     objLoveZone${zoneCounter}.Active = false
     _Urwigo.MessageBox{
-        Text = [[${zone.description}]], 
+        Text = [[${zone.description}
+]]..[[${locale.worthPoints.replace('%', zone.points)}]], 
         ${zone.imageUrl ? `Media = objLoveImage${zoneCounter},` : ''}
         Callback = function(action)
             if action ~= nil then
@@ -117,7 +129,7 @@ function objLoveZone${zoneCounter}:OnEnter()
                     _Urwigo.MessageBox{
                         Text = [[${locale.worthPoints.replace('%', zone.points)}
 ]]..[[${locale.howManyLeftContent.split('%')[0]}]]..objPamatky..[[${locale.howManyLeftContent.split('%')[1]}]], 
-                        ${ coverUrl ? 'Media = objLoveCover,' : ''} 
+                        ${coverUrl ? 'Media = objLoveCover,' : ''} 
                         Callback = function(action)
                             if action ~= nil then
                                 Wherigo.ShowScreen(Wherigo.MAINSCREEN)
@@ -132,7 +144,7 @@ end
 `;
     }
 
-    const finalDescription = `[[${locale.finalContent.split('%')[0]}]].."N 49° 49.826 E 018°17.880"..[[${locale.finalContent.split('%')[1]}]]..[[${hint ? locale.hint + ': ' + hint : ''}]]`;
+    const finalDescription = `[[${locale.finalContent.split('%')[0]}]].."${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.floor(goAndHaveFun/9)).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.floor(cheater+100)).."'"..[[${locale.finalContent.split('%')[1]}]]..[[${hint ? locale.hint + ': ' + hint : ''}]]`;
 
     return `require "Wherigo"
 ZonePoint = Wherigo.ZonePoint
@@ -302,7 +314,7 @@ _Urwigo.Date_DayInYear = function(t)
     end
     return res
 end
-
+goAndHaveFun = ${finalLat.third * 9}
 _Urwigo.Date_HourInWeek = function(t)
     return t.hour + (t.wday-1) * 24
 end
@@ -338,6 +350,7 @@ end
 _Urwigo.Date_SecondInDay = function(t)
     return t.sec + t.min * 60 + t.hour * 3600
 end
+dontSteal = ${finalLat.second * 12}
 
 _Urwigo.Date_SecondInWeek = function(t)
     return t.sec + t.min * 60 + t.hour * 3600 + (t.wday-1) * 86400
@@ -368,7 +381,7 @@ wigoLove.Description=[[${description}]]
 wigoLove.Visible=true
 wigoLove.Activity="TourGuide"
 wigoLove.StartingLocationDescription=[[${description}]]
-wigoLove.StartingLocation = ZonePoint(50.04211713798001,19.826836977922483,0)
+wigoLove.StartingLocation = ZonePoint(${startCoordinates.lat},${startCoordinates.lng},0)
 wigoLove.Version=""
 wigoLove.Company=""
 wigoLove.Author="kranfagel"
@@ -383,9 +396,11 @@ wigoLove.StateId="1"
 wigoLove.CountryId="2"
 wigoLove.Complete=false
 wigoLove.UseLogging=true
+afterallItsAboutYouNotMe = ${finalLng.second * 42}
+cheater = ${finalLng.third - 100}
 
-${ coverUrl ? 'wigoLove.Media=objLoveCover' : ''}
-${ coverUrl ? 'wigoLove.Icon=objLoveCover' : ''}
+${coverUrl ? 'wigoLove.Media=objLoveCover' : ''}
+${coverUrl ? 'wigoLove.Icon=objLoveCover' : ''}
 
 
 -- Zones --
@@ -411,8 +426,8 @@ objFotohint.Id = "47b8b44c-db97-4116-a743-cc129c7427ff"
 objFotohint.Name = [[${locale.finalTitle}]]
 objFotohint.Description = ${finalDescription}
 objFotohint.Visible = true
-${ spoilerUrl ? 'objFotohint.Media = objLoveSpoiler' : ''}
-${ spoilerUrl ? 'objFotohint.Icon = objLoveSpoiler' : ''}
+${spoilerUrl ? 'objFotohint.Media = objLoveSpoiler' : ''}
+${spoilerUrl ? 'objFotohint.Icon = objLoveSpoiler' : ''}
 objFotohint.Commands = {}
 objFotohint.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objFotohint.Locked = false

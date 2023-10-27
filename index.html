@@ -269,7 +269,7 @@
             <div>
                 <div>
 
-                    <button type="button" class="button mx-2" @click="downloadGwz()">
+                    <button type="button" class="button mx-2" @click="downloadJson()">
                         Download WigoLove JSON
                     </button>
                     <button type="button" class="button is-success" @click="downloadGwz()">
@@ -591,6 +591,10 @@
                         this.updateMarker();
                     }
                 });
+            },
+            downloadJson() {
+                const blob = new Blob([JSON.stringify(this.wigo)], {type: "text/plain;charset=utf-8"});
+                saveAs(blob, "wigolove.json");
             },
             downloadGwz() {
                 const zip = new JSZip();

@@ -113,33 +113,36 @@ objLoveTask${zoneCounter}.CorrectState = "None"
         functionsCode += `
 function objLoveZone${zoneCounter}:OnEnter()
     currentZone = "objLoveZone${zoneCounter}"
-    objLoveTask${zoneCounter}.Visible = true
-    objLoveTask${zoneCounter}.Complete = true
-    objLoveZone${zoneCounter}.Active = false
-    _Urwigo.MessageBox{
-        Text = [[${zone.description}
+    if objLoveZone${zoneCounter}.Visible == false then
+        objLoveTask${zoneCounter}.Visible = true
+        objLoveTask${zoneCounter}.Complete = true
+        objLoveZone${zoneCounter}.Visible = false
+        _Urwigo.MessageBox{
+            Text = [[${zone.name}
+]]..[[${zone.description}
 ]]..[[${locale.worthPoints.replace('%', zone.points)}]], 
-        ${zone.imageUrl ? `Media = objLoveImage${zoneCounter},` : ''}
-        Callback = function(action)
-            if action ~= nil then
-                objPamatky = objPamatky + -${zone.points}
-                if objPamatky <= 0 then
-                    objFinito()
-                else
-                    _Urwigo.MessageBox{
-                        Text = [[${locale.worthPoints.replace('%', zone.points)}
+            ${zone.imageUrl ? `Media = objLoveImage${zoneCounter},` : ''}
+            Callback = function(action)
+                if action ~= nil then
+                    objPamatky = objPamatky + -${zone.points}
+                    if objPamatky <= 0 then
+                        objFinito()
+                    else
+                        _Urwigo.MessageBox{
+                            Text = [[${locale.worthPoints.replace('%', zone.points)}
 ]]..[[${locale.howManyLeftContent.split('%')[0]}]]..objPamatky..[[${locale.howManyLeftContent.split('%')[1]}]], 
-                        ${coverUrl ? 'Media = objLoveCover,' : ''} 
-                        Callback = function(action)
-                            if action ~= nil then
-                                Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+                            ${coverUrl ? 'Media = objLoveCover,' : ''} 
+                            Callback = function(action)
+                                if action ~= nil then
+                                    Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+                                end
                             end
-                        end
-                    }
+                        }
+                    end
                 end
             end
-        end
-    }
+        }
+    end
 end
 `;
     }
@@ -519,7 +522,7 @@ function objFotohint:OnClick()
         ${spoilerUrl ? 'Media = objLoveSpoiler,' : ''} 
         Callback = function(action)
             if action ~= nil then
-                Wherigo.ShowScreen(Wherigo.INVENTORYSCREEN)
+                Wherigo.ShowScreen(Wherigo.MAINSCREEN)
             end
         end
     }

@@ -3,10 +3,30 @@
     let zoneCode = '';
     let taskCode = '';
     let functionsCode = '';
+    let mediaCode = '';
     let zoneCounter = 0;
 
-    for(let zone of zones) {
+    for (let zone of zones) {
         zoneCounter++;
+
+        if (zone.imageUrl) {
+            const mediaId = crypto.randomUUID();
+            mediaCode += `
+objLoveImage${zoneCounter} = Wherigo.ZMedia(wigoLove)
+objLoveImage${zoneCounter}.Id = "${mediaId}"
+objLoveImage${zoneCounter}.Name = "${zone.name}"
+objLoveImage${zoneCounter}.Description = ""
+objLoveImage${zoneCounter}.AltText = ""
+objLoveImage${zoneCounter}.Resources = {
+    {
+        Type = "jpg", 
+        Filename = "${zone.id}.jpg", 
+        Directives = {}
+    }
+}
+`;
+        }
+
         const zonePoints = zone.area.map(({lat, lng}) => `ZonePoint(${lat}, ${lng}, 0)`);
         const taskId = crypto.randomUUID();
         zoneCode += `
@@ -36,7 +56,7 @@ objLoveTask${zoneCounter}.Id = "${taskId}"
 objLoveTask${zoneCounter}.Name = "${zone.name}"
 objLoveTask${zoneCounter}.Description = [[${zone.description}]]
 objLoveTask${zoneCounter}.Visible = false
--- objLoveTask${zoneCounter}.Media = objDumknihy
+${zone.imageUrl ? `objLoveTask${zoneCounter}.Media = objLoveImage${zoneCounter}` : ''}
 objLoveTask${zoneCounter}.Active = true
 objLoveTask${zoneCounter}.Complete = false
 objLoveTask${zoneCounter}.CorrectState = "None"
@@ -49,7 +69,7 @@ function objLoveZone${zoneCounter}:OnEnter()
     objLoveZone${zoneCounter}.Active = false
     _Urwigo.MessageBox{
         Text = [[${zone.description}]], 
---        Media = objDumknihy, 
+        ${zone.imageUrl ? `Media = objLoveImage${zoneCounter},` : ''}
         Callback = function(action)
             if action ~= nil then
                 objPamatky = objPamatky + -1
@@ -303,20 +323,7 @@ wigoLove = Wherigo.ZCartridge()
 
 -- Media --
 
---[[
-objiloveOSTRAVA = Wherigo.ZMedia(wigoLove)
-objiloveOSTRAVA.Id = "c3344bea-b48a-4cf8-b44a-e1519b3e2924"
-objiloveOSTRAVA.Name = "i love OSTRAVA"
-objiloveOSTRAVA.Description = ""
-objiloveOSTRAVA.AltText = ""
-objiloveOSTRAVA.Resources = {
-    {
-        Type = "jpg", 
-        Filename = "ostrava.jpg", 
-        Directives = {}
-    }
-}
-]]--
+${mediaCode}
 
 -- Cartridge Info --
 wigoLove.Id="963692b6-8f1a-447b-ae71-649836ead48f"

@@ -3,3 +3,7 @@
 .map-modal .modal-content {
     width: 90%;
 }
+
+.img-preview {
+    max-height: 150px;
+}

@@ -11,7 +11,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
           integrity="sha512-gc3xjCmIy673V6MyOAZhIW93xhM9ei1I+gLbmFjUHIjocENRsLX/QUE1htk5q1XV2D/iie/VQ8DXI6Vu8bexvQ=="
           crossorigin="anonymous" referrerpolicy="no-referrer"/>
-    <link rel="stylesheet" href="style.css"/>
     <script type="text/javascript" src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
             integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg=="
@@ -22,6 +21,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"
             integrity="sha512-ozq8xQKq6urvuU6jNgkfqAmT7jKN2XumbrX1JiB3TnF7tI48DPI4Gy1GXKD/V3EExgAs1V+pRO7vwtS1LHg0Gw=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"
+            integrity="sha512-csNcFYJniKjJxRWRV1R7fvnXrycHP6qDR21mgz1ZP55xY5d+aHLfo9/FcGDQLfn2IfngbAHd8LdfsagcCqgTcQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="style.css"/>
+    <script type="text/javascript" src="cartridge.js"></script>
 </head>
 <body>
 <section id="app" class="section">
@@ -58,29 +62,44 @@
 
         <a @click="showMap()">Show map of all zones</a>
 
-        <div v-for="zone in wigo.zones" :key="zone.id" class="my-3">
-            <div class="field">
-                <label class="label">Name</label>
-                <div class="control">
-                    <input class="input" type="text" v-model="zone.name" @blur="saveInLocalStorage()">
+        <div v-for="zone in wigo.zones" :key="zone.id" class="my-5 card">
+            <div class="card-content">
+                <div class="is-flex mb-2">
+                    <h2 class="title is-flex-grow-1">{{ zone.name }}</h2>
+                    <button class="button is-small" type="button" @click="deleteZone(zone)">Delete</button>
                 </div>
-                <p class="help">Try not to use diacritic characters here.</p>
-            </div>
-
-            <div class="field">
-                <label class="label">Description</label>
-                <div class="control">
-                    <textarea class="textarea" v-model="zone.description" @blur="saveInLocalStorage()"></textarea>
+                <div class="field">
+                    <label class="label">Name</label>
+                    <div class="control">
+                        <input class="input" type="text" v-model="zone.name" @blur="saveInLocalStorage()">
+                    </div>
+                    <p class="help">Try not to use diacritic characters here.</p>
                 </div>
-            </div>
 
-            <div class="field">
-                <label class="label">Area</label>
-                <a @click="editZoneArea(zone)">{{ zone.area.length }} points</a>
+                <div class="field">
+                    <label class="label">Description</label>
+                    <div class="control">
+                        <textarea class="textarea" v-model="zone.description" @blur="saveInLocalStorage()"></textarea>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="label">Area</label>
+                    <a @click="editZoneArea(zone)">{{ zone.area.length }} points</a>
+                </div>
             </div>
         </div>
 
-        <button class="button button-primary" @click="addZone()">Add new zone</button>
+        <div class="is-flex">
+            <div class="is-flex-grow-1">
+                <button class="button button-primary" @click="addZone()">Add new zone</button>
+            </div>
+            <div>
+                <button type="button" class="button is-success" @click="downloadGwz()">
+                    Download GWZ
+                </button>
+            </div>
+        </div>
     </div>
 
     <div :class="['modal map-modal', {'is-active': mapModalOpened}]">
@@ -133,6 +152,12 @@
                     points: 1,
                     area: []
                 });
+            },
+            deleteZone(zone) {
+                if (confirm(`Are you sure you want to delete ${zone.name}?`)) {
+                    this.wigo.zones.splice(this.wigo.zones.indexOf(zone), 1);
+                    this.saveInLocalStorage();
+                }
             },
             editZoneArea(zone) {
                 this.editingZone = zone;
@@ -232,6 +257,17 @@
                     });
                 });
             },
+            downloadGwz() {
+                const zip = new JSZip();
+                zip.file("_cartridge.lua", cartridgeCode(this.wigo));
+                // var img = zip.folder("images");
+                // img.file("smile.gif", imgData, {base64: true});
+                zip.generateAsync({type: "blob"})
+                    .then(function (content) {
+                        // see FileSaver.js
+                        saveAs(content, "i_love_wigo.gwz");
+                    });
+            }
         }
     }).mount('#app');
 </script>

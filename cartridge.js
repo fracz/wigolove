@@ -1,4 +1,83 @@
-﻿function cartridgeCode({name, description}) {
+﻿function cartridgeCode({name, description, zones}) {
+
+    let zoneCode = '';
+    let taskCode = '';
+    let functionsCode = '';
+    let zoneCounter = 0;
+
+    for(let zone of zones) {
+        zoneCounter++;
+        const zonePoints = zone.area.map(({lat, lng}) => `ZonePoint(${lat}, ${lng}, 0)`);
+        const taskId = crypto.randomUUID();
+        zoneCode += `
+objLoveZone${zoneCounter} = Wherigo.Zone(wigoLove)
+objLoveZone${zoneCounter}.Id = "${zone.id}"
+objLoveZone${zoneCounter}.Name = "${zone.name}"
+objLoveZone${zoneCounter}.Description = [[${zone.description}]]
+objLoveZone${zoneCounter}.Visible = false
+objLoveZone${zoneCounter}.Commands = {}
+objLoveZone${zoneCounter}.DistanceRange = Distance(-1, "feet")
+objLoveZone${zoneCounter}.ShowObjects = "OnEnter"
+objLoveZone${zoneCounter}.ProximityRange = Distance(60, "meters")
+objLoveZone${zoneCounter}.AllowSetPositionTo = false
+objLoveZone${zoneCounter}.Active = true
+objLoveZone${zoneCounter}.Points = {
+    ${zonePoints.join(', ')}
+}
+objLoveZone${zoneCounter}.OriginalPoint = ${zonePoints[0]}
+objLoveZone${zoneCounter}.DistanceRangeUOM = "Feet"
+objLoveZone${zoneCounter}.ProximityRangeUOM = "Meters"
+objLoveZone${zoneCounter}.OutOfRangeName = ""
+objLoveZone${zoneCounter}.InRangeName = ""
+`;
+        taskCode += `
+objLoveTask${zoneCounter} = Wherigo.ZTask(wigoLove)
+objLoveTask${zoneCounter}.Id = "${taskId}"
+objLoveTask${zoneCounter}.Name = "${zone.name}"
+objLoveTask${zoneCounter}.Description = [[${zone.description}]]
+objLoveTask${zoneCounter}.Visible = false
+-- objLoveTask${zoneCounter}.Media = objDumknihy
+objLoveTask${zoneCounter}.Active = true
+objLoveTask${zoneCounter}.Complete = false
+objLoveTask${zoneCounter}.CorrectState = "None"
+`;
+        functionsCode += `
+function objLoveZone${zoneCounter}:OnEnter()
+    currentZone = "objLoveZone${zoneCounter}"
+    objLoveTask${zoneCounter}.Visible = true
+    objLoveTask${zoneCounter}.Complete = true
+    objLoveZone${zoneCounter}.Active = false
+    _Urwigo.MessageBox{
+        Text = [[${zone.description}]], 
+--        Media = objDumknihy, 
+        Callback = function(action)
+            if action ~= nil then
+                objPamatky = objPamatky + -1
+                if objPamatky == 0 then
+                    if obj15 > 0 then
+                        Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+                    else
+                        objFinito()
+                    end
+                else
+                    _Urwigo.MessageBox{
+                        Text = ("ZOstalo jeszcze "..objPamatky)..[[ stref do odkrycia.
+Tak pojd najit dalsi! :)]], 
+--                        Media = objiloveOSTRAVA, 
+                        Callback = function(action)
+                            if action ~= nil then
+                                Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+                            end
+                        end
+                    }
+                end
+            end
+        end
+    }
+end
+`;
+    }
+
     return `require "Wherigo"
 ZonePoint = Wherigo.ZonePoint
 Distance = Wherigo.Distance
@@ -267,30 +346,7 @@ wigoLove.UseLogging=true
 
 
 -- Zones --
-
-objDumknihy1 = Wherigo.Zone(wigoLove)
-objDumknihy1.Id = "5e27c53d-9cb2-41e4-83fb-52fbc3ec6d2b"
-objDumknihy1.Name = "Dům knihy"
-objDumknihy1.Description = ""
-objDumknihy1.Visible = false
-objDumknihy1.Commands = {}
-objDumknihy1.DistanceRange = Distance(-1, "feet")
-objDumknihy1.ShowObjects = "OnEnter"
-objDumknihy1.ProximityRange = Distance(60, "meters")
-objDumknihy1.AllowSetPositionTo = false
-objDumknihy1.Active = true
-objDumknihy1.Points = {
-    ZonePoint(50.04175698259299, 19.82656459342675, 0), 
-    ZonePoint(50.041633500123964, 19.826628683896335, 0), 
-    ZonePoint(50.04164893544998, 19.82690106839207, 0), 
-    ZonePoint(50.0417775629736, 19.82689305708337, 0)
-}
-objDumknihy1.OriginalPoint = ZonePoint(49.8325594812387, 18.2900629175878, 0)
-objDumknihy1.DistanceRangeUOM = "Feet"
-objDumknihy1.ProximityRangeUOM = "Meters"
-objDumknihy1.OutOfRangeName = ""
-objDumknihy1.InRangeName = ""
-
+${zoneCode}
 
 -- Items --
 objHowManyLeft = Wherigo.ZItem{
@@ -334,17 +390,7 @@ objZivoty.Locked = false
 objZivoty.Opened = false
 
 -- Tasks --
-objDumknihy2 = Wherigo.ZTask(wigoLove)
-objDumknihy2.Id = "d9e191af-d120-4f10-9255-10c11814288c"
-objDumknihy2.Name = "Dům knihy"
-objDumknihy2.Description = [[Obchodní dům Brouk a Babka/Knihcentrum
-Karel Kotas v případě obchodního domu pro známou českou firmu Brouk a Babka pracoval s funkcionalistickými principy. Přitom se ve výrazu stavby nepodřizoval sousední novobarokní budově Městského divadla. Hranolovou stavbu původně s ustupujícím horním podlažím prostorově rozčlenil rozměrným světlíkem. Ten zanikl vzhledem k rozšiřování obchodního provozu. Za 2 sv. války zaniklo bombardováním poškozené horní ustupující podlaží a schodišťový rizalit. Nyní se čtyřpatrová stavba obdélného půdorysu s proskleným parterem otevírá do exteriéru ve vyšších podlažích pásovými okny, oddělenými subtilními pilířky. Při rekonstrukci a přestavbě obchodního domu na Dům knihy obnovila firma Librex světlík v prodejní části domu. Rok 1928–1929. Autor: Kotas Karel. Styl: funkcionalismus.
-Foto: Krtek 64]]
-objDumknihy2.Visible = false
--- objDumknihy2.Media = objDumknihy
-objDumknihy2.Active = true
-objDumknihy2.Complete = false
-objDumknihy2.CorrectState = "None"
+${taskCode}
 
 -- Cartridge Variables --
 -- objPamatky = 15
@@ -352,22 +398,22 @@ objPamatky = 1
 obj15 = 0
 objzivoty = 3
 objdead = true
-currentZone = "objDumknihy1"
+currentZone = "objLoveZone1"
 currentCharacter = "dummy"
 currentItem = "objHowManyLeft"
-currentTask = "objApartmensRotschildPalace2"
-currentInput = "objDulHlubina2"
+currentTask = "objLoveTask1"
+-- currentInput = "objDulHlubina2"
 currentTimer = "dummy"
 wigoLove.ZVariables = {
     objPamatky = 15, 
     obj15 = 0, 
     objzivoty = 3, 
     objdead = true, 
-    currentZone = "objDumknihy1", 
+    currentZone = "objLoveZone1", 
     currentCharacter = "dummy", 
     currentItem = "objHowManyLeft", 
-    currentTask = "objApartmensRotschildPalace2", 
-    currentInput = "objDulHlubina2", 
+    currentTask = "objLoveTask1", 
+--    currentInput = "objDulHlubina2", 
     currentTimer = "dummy"
 }
 
@@ -394,41 +440,8 @@ function wigoLove:OnStart()
 end
 function wigoLove:OnRestore()
 end
-function objDumknihy1:OnEnter()
-    currentZone = "objDumknihy1"
-    objDumknihy2.Visible = true
-    objDumknihy2.Complete = true
-    objDumknihy1.Active = false
-    _Urwigo.MessageBox{
-        Text = [[Obchodní dům Brouk a Babka/Knihcentrum
-Karel Kotas v případě obchodního domu pro známou českou firmu Brouk a Babka pracoval s funkcionalistickými principy. Přitom se ve výrazu stavby nepodřizoval sousední novobarokní budově Městského divadla. Hranolovou stavbu původně s ustupujícím horním podlažím prostorově rozčlenil rozměrným světlíkem. Ten zanikl vzhledem k rozšiřování obchodního provozu. Za 2 sv. války zaniklo bombardováním poškozené horní ustupující podlaží a schodišťový rizalit. Nyní se čtyřpatrová stavba obdélného půdorysu s proskleným parterem otevírá do exteriéru ve vyšších podlažích pásovými okny, oddělenými subtilními pilířky. Při rekonstrukci a přestavbě obchodního domu na Dům knihy obnovila firma Librex světlík v prodejní části domu. Rok 1928–1929. Autor: Kotas Karel. Styl: funkcionalismus.
-Foto: Krtek 64]], 
-        Media = objDumknihy, 
-        Callback = function(action)
-            if action ~= nil then
-                objPamatky = objPamatky + -1
-                if objPamatky == 0 then
-                    if obj15 > 0 then
-                        Wherigo.ShowScreen(Wherigo.MAINSCREEN)
-                    else
-                        objFinito()
-                    end
-                else
-                    _Urwigo.MessageBox{
-                        Text = ("Jeste ti chybi "..objPamatky)..[[ pamatek.
-Tak pojd najit dalsi! :)]], 
-                        Media = objiloveOSTRAVA, 
-                        Callback = function(action)
-                            if action ~= nil then
-                                Wherigo.ShowScreen(Wherigo.MAINSCREEN)
-                            end
-                        end
-                    }
-                end
-            end
-        end
-    }
-end
+
+${functionsCode}
 
 
 function objHowManyLeft:OnClick()

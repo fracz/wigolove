@@ -34,7 +34,22 @@
 <body>
 <section id="app" class="section">
     <div class="container">
-        <h1 class="title">WigoLove</h1>
+        <div class="is-flex">
+            <h1 class="title is-flex-grow-1">
+                <span v-if="wigo.name">{{ wigo.name }} ({{ wigo.zones.length }})</span>
+                <span v-else>WigoLove</span>
+            </h1>
+            <button type="button" class="button is-small mx-2" @click="clearForm()">Clear form</button>
+            <div class="file">
+                <label class="file-label is-small">
+                    <input class="file-input" type="file" accept=".json"
+                           @change="(e) => onJsonImport(e)">
+                    <span class="file-cta">
+                          <span class="file-label">Import WigoLove JSON</span>
+                        </span>
+                </label>
+            </div>
+        </div>
         <p class="subtitle">Create <em>I ❤️ place</em> Wherigo Scenarios easily.</p>
 
         <div class="field">
@@ -62,6 +77,9 @@
                 <input class="input" type="number" v-model="wigo.requiredPoints" min="1" max="1000"
                        @blur="saveInLocalStorage()">
             </div>
+            <p class="help">
+                When collecting all zones, the player will score {{ totalPoints }} points in current configuration.
+            </p>
         </div>
 
         <div class="field">
@@ -249,12 +267,25 @@
                 <button class="button button-primary" @click="addZone()">Add new zone</button>
             </div>
             <div>
-                <button type="button" class="button is-success" @click="downloadGwz()">
-                    Download GWZ
-                </button>
+                <div>
+
+                    <button type="button" class="button mx-2" @click="downloadGwz()">
+                        Download WigoLove JSON
+                    </button>
+                    <button type="button" class="button is-success" @click="downloadGwz()">
+                        Download GWZ
+                    </button>
+                </div>
+                <p class="help">Download WigoLove JSON to import it here for editing in the future.</p>
+                <p class="help">Download GWZ for compiling on wherigo.com website.</p>
             </div>
         </div>
     </div>
+
+    <footer class="has-text-centered mt-6 mb-0 p-0 is-size-7">
+        Made with ❤️ for geocaching and web by <a
+            href="https://www.geocaching.com/p/?guid=49369c87-1a23-4cd6-a054-3c76cf2399f6">kranfagel</a>.
+    </footer>
 
     <div :class="['modal map-modal', {'is-active': mapModalOpened}]">
         <div class="modal-background"></div>
@@ -284,10 +315,10 @@
                 editingZone: undefined,
                 currentPolygonCoords: [],
                 wigo: {
-                    name: 'I love Krakow',
+                    name: '',
                     description: '',
                     requiredPoints: 15,
-                    hint: 'The hint for the final',
+                    hint: '',
                     spoilerUrl: '',
                     coverUrl: '',
                     startCoordinates: {lat: 50, lng: 19},
@@ -306,6 +337,70 @@
             });
         },
         methods: {
+            clearForm() {
+                if (confirm('All data in the form will be lost. Continue?')) {
+                    this.wigo = {
+                        name: '',
+                        description: '',
+                        requiredPoints: 15,
+                        hint: '',
+                        spoilerUrl: '',
+                        coverUrl: '',
+                        startCoordinates: {lat: 50, lng: 19},
+                        finalLat: {letter: 'N', first: 50, second: 40, third: 333},
+                        finalLng: {letter: 'E', first: 19, second: 48, third: 888},
+                        localeCode: 'EN',
+                        zones: [],
+                    };
+                }
+            },
+            onJsonImport(e) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const wigo = JSON.parse(evt.target.result);
+                    if (wigo && wigo.requiredPoints) {
+                        if (confirm('This will overwrite current values. Continue?')) {
+                            this.wigo = wigo;
+                            this.saveInLocalStorage();
+                        }
+                    } else {
+                        alert('The file is corrupted.')
+                    }
+                };
+                reader.onerror = function (e) {
+                    alert('Unrecognized file format. ' + e.message);
+                }
+                reader.readAsText(e.target.files[0], "UTF-8");
+            },
+            // onGwzImport(e) {
+            //     JSZip.loadAsync(e.target.files[0])
+            //         .then((zip) => {
+            //             let found = false;
+            //             zip.forEach((relativePath, zipEntry) => {
+            //                 if (zipEntry.name === 'i_love_wigo.json') {
+            //                     found = true;
+            //                     zip.file(zipEntry.name).async('string')
+            //                         .then((text) => {
+            //                             const wigo = JSON.parse(text);
+            //                             if (wigo && wigo.requiredPoints) {
+            //                                 if (confirm('This will overwrite current values. Continue?')) {
+            //                                     this.wigo = wigo;
+            //                                     this.saveInLocalStorage();
+            //                                 }
+            //                             } else {
+            //                                 alert('The file is corrupted.')
+            //                             }
+            //                         })
+            //                         .catch(() => alert('Could not read the file.'));
+            //                 }
+            //             });
+            //             if (!found) {
+            //                 alert('This GWZ was not created by WigoLove. Cannot import. Sorry.');
+            //             }
+            //         }, function (e) {
+            //             alert('Unrecognized file format. ' + e.message);
+            //         });
+            // },
             addZone() {
                 this.wigo.zones.push({
                     id: crypto.randomUUID(),
@@ -515,9 +610,9 @@
                     const imageData = this.wigo.coverUrl.split(',')[1];
                     zip.file(`cover.jpg`, imageData, {base64: true});
                 }
+                zip.file('i_love_wigo.json', JSON.stringify(this.wigo));
                 zip.generateAsync({type: "blob"})
                     .then(function (content) {
-                        // see FileSaver.js
                         saveAs(content, "i_love_wigo.gwz");
                     });
             },
@@ -529,6 +624,9 @@
         computed: {
             availableLocales() {
                 return Object.keys(locale);
+            },
+            totalPoints() {
+                return this.wigo.zones.map(z => z.points).reduce((a, b) => a + b, 0);
             }
         }
     }).mount('#app');

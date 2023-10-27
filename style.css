@@ -7,3 +7,9 @@
 .img-preview {
     max-height: 150px;
 }
+
+.locale-chooser {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+}

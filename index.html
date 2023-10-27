@@ -37,7 +37,7 @@
     <div class="container">
         <div class="is-flex">
             <h1 class="title is-flex-grow-1">
-                <span v-if="wigo.name">{{ wigo.name }} ({{ wigo.zones.length }})</span>
+                <span v-if="wigo.name[currentLocale]">{{ wigo.name[currentLocale] }} ({{ wigo.zones.length }})</span>
                 <span v-else>WigoLove</span>
             </h1>
             <button type="button" class="button is-small mx-2" @click="clearForm()">Clear form</button>
@@ -56,7 +56,7 @@
         <div class="field">
             <label class="label">Name</label>
             <div class="control">
-                <input class="input" type="text" v-model="wigo.name" @blur="saveInLocalStorage()">
+                <input class="input" type="text" v-model="wigo.name[currentLocale]" @blur="saveInLocalStorage()">
             </div>
             <p class="help">Try not to use diacritic characters here.</p>
         </div>
@@ -64,7 +64,7 @@
         <div class="field">
             <label class="label">Description</label>
             <div class="control">
-                <textarea class="textarea" v-model="wigo.description" @blur="saveInLocalStorage()"></textarea>
+                <textarea class="textarea" v-model="wigo.description[currentLocale]" @blur="saveInLocalStorage()"></textarea>
             </div>
             <p class="help">
                 It will be used as the scenario description and it will be displayed as the first message for
@@ -108,15 +108,6 @@
             <label class="label">Starting point</label>
             <div>
                 <a @click="showMap()">{{ wigo.startCoordinates.lat }}, {{ wigo.startCoordinates.lng }}</a>
-            </div>
-        </div>
-
-        <div class="field">
-            <label class="label">Language of messages and buttons</label>
-            <div class="select">
-                <select v-model="wigo.localeCode" @change="saveInLocalStorage()">
-                    <option v-for="locale in availableLocales" :key="locale">{{ locale }}</option>
-                </select>
             </div>
         </div>
 
@@ -179,7 +170,7 @@
                 <div class="field">
                     <label class="label">Hint</label>
                     <div class="control">
-                        <textarea class="textarea" v-model="wigo.hint" @blur="saveInLocalStorage()"></textarea>
+                        <textarea class="textarea" v-model="wigo.hint[currentLocale]" @blur="saveInLocalStorage()"></textarea>
                     </div>
                     <p class="help">
                         It will be displayed for the user after completing the scenario.
@@ -211,13 +202,13 @@
         <div v-for="zone in wigo.zones" :key="zone.id" class="my-5 card">
             <div class="card-content">
                 <div class="is-flex mb-2">
-                    <h2 class="title is-flex-grow-1">{{ zone.name }}</h2>
+                    <h2 class="title is-flex-grow-1">{{ zone.name[currentLocale] }}</h2>
                     <button class="button is-small" type="button" @click="deleteZone(zone)">Delete</button>
                 </div>
                 <div class="field">
                     <label class="label">Name</label>
                     <div class="control">
-                        <input class="input" type="text" v-model="zone.name" @blur="saveInLocalStorage()">
+                        <input class="input" type="text" v-model="zone.name[currentLocale]" @blur="saveInLocalStorage()">
                     </div>
                     <p class="help">Try not to use diacritic characters here.</p>
                 </div>
@@ -225,7 +216,7 @@
                 <div class="field">
                     <label class="label">Description</label>
                     <div class="control">
-                        <textarea class="textarea" v-model="zone.description" @blur="saveInLocalStorage()"></textarea>
+                        <textarea class="textarea" v-model="zone.description[currentLocale]" @blur="saveInLocalStorage()"></textarea>
                     </div>
                 </div>
 
@@ -274,13 +265,20 @@
                         Download WigoLove JSON
                     </button>
                     <button type="button" class="button is-success" @click="downloadGwz()">
-                        Download GWZ
+                        Download GWZ ({{currentLocale}})
                     </button>
                 </div>
                 <p class="help">Download WigoLove JSON to import it here for editing in the future.</p>
                 <p class="help">Download GWZ for compiling on wherigo.com website.</p>
             </div>
         </div>
+    </div>
+
+    <div class="locale-chooser">
+        <button v-for="locale in availableLocales" :key="locale" @click="currentLocale = locale"
+                :class="['button', {'is-info': currentLocale === locale}]">
+            {{ locale }}
+        </button>
     </div>
 
     <footer class="has-text-centered mt-6 mb-0 p-0 is-size-7">
@@ -316,17 +314,17 @@
                 addingZone: false,
                 editingZone: undefined,
                 currentPolygonCoords: [],
+                currentLocale: 'EN',
                 wigo: {
-                    name: '',
-                    description: '',
+                    name: {EN: '', PL: ''},
+                    description: {EN: '', PL: ''},
+                    hint: {EN: '', PL: ''},
                     requiredPoints: 15,
-                    hint: '',
                     spoilerUrl: '',
                     coverUrl: '',
                     startCoordinates: {lat: 50, lng: 19},
                     finalLat: {letter: 'N', first: 50, second: 40, third: 333},
                     finalLng: {letter: 'E', first: 19, second: 48, third: 888},
-                    localeCode: 'EN',
                     zones: [],
                 }
             }
@@ -342,10 +340,10 @@
             clearForm() {
                 if (confirm('All data in the form will be lost. Continue?')) {
                     this.wigo = {
-                        name: '',
-                        description: '',
+                        name: {EN: '', PL: ''},
+                        description: {EN: '', PL: ''},
+                        hint: {EN: '', PL: ''},
                         requiredPoints: 15,
-                        hint: '',
                         spoilerUrl: '',
                         coverUrl: '',
                         startCoordinates: {lat: 50, lng: 19},
@@ -501,8 +499,8 @@
                     if (this.currentPolygonCoords && this.currentPolygonCoords.length > 2) {
                         this.wigo.zones.push({
                             id: crypto.randomUUID(),
-                            name: '',
-                            description: '',
+                            name: {EN: '', PL: ''},
+                            description: {EN: '', PL: ''},
                             photo: '',
                             points: 1,
                             imageUrl: '',
@@ -609,7 +607,17 @@
             },
             downloadGwz() {
                 const zip = new JSZip();
-                zip.file("_cartridge.lua", cartridgeCode(this.wigo, locale[this.wigo.localeCode || 'EN']));
+                const wigo = {...this.wigo};
+                wigo.name = wigo.name[this.currentLocale];
+                wigo.description = wigo.description[this.currentLocale];
+                wigo.hint = wigo.description[this.hint];
+                wigo.zones = wigo.zones.map(zone => {
+                    const z = {...zone};
+                    z.name = zone.name[this.currentLocale];
+                    z.description = zone.description[this.currentLocale];
+                    return z;
+                })
+                zip.file("_cartridge.lua", cartridgeCode(wigo, locale[this.currentLocale]));
                 // var img = zip.folder("images");
                 for (let zone of this.wigo.zones) {
                     if (zone.imageUrl) {

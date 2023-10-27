@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"
+          integrity="sha512-gc3xjCmIy673V6MyOAZhIW93xhM9ei1I+gLbmFjUHIjocENRsLX/QUE1htk5q1XV2D/iie/VQ8DXI6Vu8bexvQ=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" href="style.css"/>
     <script type="text/javascript" src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
@@ -16,8 +19,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"
+            integrity="sha512-ozq8xQKq6urvuU6jNgkfqAmT7jKN2XumbrX1JiB3TnF7tI48DPI4Gy1GXKD/V3EExgAs1V+pRO7vwtS1LHg0Gw=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
 <section id="app" class="section">
@@ -71,7 +75,7 @@
 
             <div class="field">
                 <label class="label">Area</label>
-                <a @click="editZoneArea(zone)">{{ zone.area }}</a>
+                <a @click="editZoneArea(zone)">{{ zone.area.length }} points</a>
             </div>
         </div>
 
@@ -94,6 +98,7 @@
     const {createApp} = Vue
     let map;
     let editableLayers;
+    let nonEditableLayers;
     let drawControl;
     let drawEditControl;
 
@@ -107,7 +112,38 @@
                     name: 'I love Krakow',
                     description: '',
                     requiredPoints: 15,
-                    zones: [],
+                    zones: [
+                        {
+                            id: crypto.randomUUID(),
+                            name: 'Wawel',
+                            description: '',
+                            photo: '',
+                            points: 1,
+                            area: [
+                                {"lat": 50.05542014848552, "lng": 19.936496893877756},
+                                {"lat": 50.05489662647379, "lng": 19.933502675667224},
+                                {"lat": 50.05349135493584, "lng": 19.93292314956196},
+                                {"lat": 50.05320202921635, "lng": 19.933738778895275},
+                                {"lat": 50.052564817611, "lng": 19.935164479758797},
+                                {"lat": 50.05360157379869, "lng": 19.936400306193544},
+                                {"lat": 50.054214661602614, "lng": 19.937655946088285},
+                                {"lat": 50.054979288223805, "lng": 19.93763448215845}
+                            ]
+                        },
+                        {
+                            id: crypto.randomUUID(),
+                            name: 'Sukiennice',
+                            description: '',
+                            photo: '',
+                            points: 1,
+                            area: [
+                                {"lat": 50.062247799011715, "lng": 19.937401292674487},
+                                {"lat": 50.06136275612953, "lng": 19.93666078709555},
+                                {"lat": 50.06110791585173, "lng": 19.93719201935869},
+                                {"lat": 50.06207905668699, "lng": 19.938007648692047},
+                            ]
+                        },
+                    ],
                 }
             }
         },
@@ -127,25 +163,11 @@
             editZoneArea(zone) {
                 this.editingZone = zone;
                 this.currentPolygonCoords = zone.area;
-                this.showMap().then(() => {
-                    console.log('added');
+                this.showMap(zone.area.length === 0).then(() => {
                     if (zone.area.length) {
-                        // const geoJson = {
-                        //     type: "Feature",
-                        //     properties: {},
-                        //     geometry: {type: "Polygon", coordinates: [zone.area]}
-                        // };
-                        // L.geoJSON(geoJson).addTo(editableLayers);
                         const polygon = L.polygon(zone.area);
-                        // console.log(zone.area);
-                        // const polygon = L.polygon([
-                        //     [51.512642, -0.099993],
-                        //     [51.520387, -0.087633],
-                        //     [51.509116, -0.082483]
-                        // ]);
-                        // polygon.addTo(editableLayers);
                         editableLayers.addLayer(polygon);
-                        // map.fitBounds(polygon.getBounds());
+                        map.fitBounds(polygon.getBounds());
                         map.addControl(drawEditControl);
                     } else {
                         map.addControl(drawControl);
@@ -157,13 +179,10 @@
                 this.currentPolygonCoords = undefined;
                 this.editingZone = undefined;
                 this.mapModalOpened = false;
-                map.removeControl(drawControl);
-                map.removeControl(drawEditControl);
-                editableLayers.clearLayers();
             },
-            showMap() {
+            showMap(withFit = true) {
                 this.mapModalOpened = true;
-                return new Promise((resolve) => {
+                const mapReady = new Promise((resolve) => {
                     if (!map) {
                         this.$nextTick(() => {
                             this.initMap();
@@ -174,6 +193,19 @@
                         resolve();
                     }
                 });
+                mapReady.then(() => {
+                    map.removeControl(drawControl);
+                    map.removeControl(drawEditControl);
+                    editableLayers.clearLayers();
+                    nonEditableLayers.clearLayers();
+                    const bg = L.polygon(this.wigo.zones.map(z => z.area));
+                    bg.setStyle({color: '#FFFF00', fillColor: '#FFFF00'});
+                    nonEditableLayers.addLayer(bg);
+                    if (withFit) {
+                        map.fitBounds(bg.getBounds());
+                    }
+                });
+                return mapReady;
             },
             initMap() {
                 map = L.map('map', {doubleClickZoom: false}).setView([50, 19], 6);
@@ -184,25 +216,16 @@
                         maxZoom: 18
                     }).addTo(map);
 
+                nonEditableLayers = new L.FeatureGroup();
+                map.addLayer(nonEditableLayers);
                 editableLayers = new L.FeatureGroup();
                 map.addLayer(editableLayers);
-
                 drawControl = new L.Control.Draw({
-                    position: 'topright',
                     draw: {
-                        polygon: {
-                            allowIntersection: false, // Restricts shapes to simple polygons
-                            drawError: {
-                                color: '#e1e100', // Color the shape will turn when intersects
-                                message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
-                            },
-                            shapeOptions: {
-                                color: '#97009c'
-                            }
-                        },
-                        // disable toolbar item by setting it to false
+                        polygon: {allowIntersection: false, drawError: {color: '#FF0000'}},
                         polyline: false,
-                        circle: false, // Turns off this drawing tool
+                        circle: false,
+                        circlemarker: false,
                         rectangle: false,
                         marker: false,
                     },
@@ -210,35 +233,26 @@
                 });
 
                 drawEditControl = new L.Control.Draw({
-                    position: 'topright',
                     draw: false,
                     edit: {
                         featureGroup: editableLayers, //REQUIRED!!
-                        remove: true
+                        remove: false
                     }
                 });
 
                 map.on('draw:created', (e) => {
-                    const type = e.layerType;
-                    const layer = e.layer;
-                    console.log(layer._latlngs);
-                    this.currentPolygonCoords = layer._latlngs;
-                    // this.currentPolygonCoords = layer.toGeoJSON().geometry.coordinates[0];
-
-                    if (type === 'marker') {
-                        layer.bindPopup('A popup!');
-                    }
+                    this.currentPolygonCoords = e.layer.getLatLngs()[0];
                     map.removeControl(drawControl);
                     map.addControl(drawEditControl);
-                    editableLayers.addLayer(layer);
+                    editableLayers.addLayer(e.layer);
                 });
 
-                map.on('draw:deletestop', (e) => {
-                    editableLayers.clearLayers();
-                    map.removeControl(drawEditControl);
-                    map.addControl(drawControl);
+                map.on('draw:edited', (e) => {
+                    e.layers.eachLayer((layer) => {
+                        this.currentPolygonCoords = layer.getLatLngs()[0];
+                        console.log(this.currentPolygonCoords);
+                    });
                 });
-
             },
         }
     }).mount('#app');

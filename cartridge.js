@@ -8,7 +8,9 @@
                            coverUrl,
                            startCoordinates,
                            finalLat,
-                           finalLng
+                           finalLng,
+                           zonesAlwaysVisible,
+                           displayAreaRewards,
                        }, locale) {
 
     let zoneCode = '';
@@ -81,8 +83,8 @@ objLoveZone${zoneCounter} = Wherigo.Zone(wigoLove)
 objLoveZone${zoneCounter}.Id = "${zone.id}"
 objLoveZone${zoneCounter}.Name = [[${zone.name}]]
 objLoveZone${zoneCounter}.Description = [[${zone.description}
-]]..[[${locale.worthPoints.replace('%', zone.points)}]]
-objLoveZone${zoneCounter}.Visible = false
+]]..[[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}]]
+objLoveZone${zoneCounter}.Visible = ${zonesAlwaysVisible ? 'true' : 'false'}
 objLoveZone${zoneCounter}.Commands = {}
 objLoveZone${zoneCounter}.DistanceRange = Distance(-1, "feet")
 objLoveZone${zoneCounter}.ShowObjects = "OnEnter"
@@ -104,7 +106,7 @@ objLoveTask${zoneCounter} = Wherigo.ZTask(wigoLove)
 objLoveTask${zoneCounter}.Id = "${taskId}"
 objLoveTask${zoneCounter}.Name = [[${zone.name}]]
 objLoveTask${zoneCounter}.Description = [[${zone.description}
-]]..[[${locale.worthPoints.replace('%', zone.points)}]]
+]]..[[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}]]
 objLoveTask${zoneCounter}.Visible = false
 ${zone.imageUrl ? `objLoveTask${zoneCounter}.Media = objLoveImage${zoneCounter}` : ''}
 objLoveTask${zoneCounter}.Active = true
@@ -123,7 +125,7 @@ function objLoveZone${zoneCounter}:OnEnter()
         _Urwigo.MessageBox{
             Text = [[${zone.name}
 ]]..[[${zone.description}
-]]..[[${locale.worthPoints.replace('%', zone.points)}]], 
+]]..[[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}]], 
             ${zone.imageUrl ? `Media = objLoveImage${zoneCounter},` : ''}
             Callback = function(action)
                 if action ~= nil then
@@ -132,7 +134,7 @@ function objLoveZone${zoneCounter}:OnEnter()
                         objFinito()
                     else
                         _Urwigo.MessageBox{
-                            Text = [[${locale.worthPoints.replace('%', zone.points)}
+                            Text = [[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}
 ]]..[[${locale.howManyLeftContent.split('%')[0]}]]..objPamatky..[[${locale.howManyLeftContent.split('%')[1]}]], 
                             ${coverUrl ? 'Media = objLoveCover,' : ''} 
                             Callback = function(action)

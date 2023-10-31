@@ -64,7 +64,8 @@
         <div class="field">
             <label class="label">Description</label>
             <div class="control">
-                <textarea class="textarea" v-model="wigo.description[currentLocale]" @blur="saveInLocalStorage()"></textarea>
+                <textarea class="textarea" v-model="wigo.description[currentLocale]"
+                          @blur="saveInLocalStorage()"></textarea>
             </div>
             <p class="help">
                 It will be used as the scenario description and it will be displayed as the first message for
@@ -109,6 +110,20 @@
             <div>
                 <a @click="showMap()">{{ wigo.startCoordinates.lat }}, {{ wigo.startCoordinates.lng }}</a>
             </div>
+        </div>
+
+        <div class="field">
+            <label class="checkbox">
+                <input type="checkbox" v-model="wigo.zonesAlwaysVisible">
+                Zones always visible
+            </label>
+        </div>
+
+        <div class="field">
+            <label class="checkbox">
+                <input type="checkbox" v-model="wigo.displayAreaRewards">
+                Add info about reward for the area to the zone message
+            </label>
         </div>
 
         <div class="card my-5">
@@ -170,7 +185,8 @@
                 <div class="field">
                     <label class="label">Hint</label>
                     <div class="control">
-                        <textarea class="textarea" v-model="wigo.hint[currentLocale]" @blur="saveInLocalStorage()"></textarea>
+                        <textarea class="textarea" v-model="wigo.hint[currentLocale]"
+                                  @blur="saveInLocalStorage()"></textarea>
                     </div>
                     <p class="help">
                         It will be displayed for the user after completing the scenario.
@@ -208,7 +224,8 @@
                 <div class="field">
                     <label class="label">Name</label>
                     <div class="control">
-                        <input class="input" type="text" v-model="zone.name[currentLocale]" @blur="saveInLocalStorage()">
+                        <input class="input" type="text" v-model="zone.name[currentLocale]"
+                               @blur="saveInLocalStorage()">
                     </div>
                     <p class="help">Try not to use diacritic characters here.</p>
                 </div>
@@ -216,7 +233,8 @@
                 <div class="field">
                     <label class="label">Description</label>
                     <div class="control">
-                        <textarea class="textarea" v-model="zone.description[currentLocale]" @blur="saveInLocalStorage()"></textarea>
+                        <textarea class="textarea" v-model="zone.description[currentLocale]"
+                                  @blur="saveInLocalStorage()"></textarea>
                     </div>
                 </div>
 
@@ -326,6 +344,8 @@
                     finalLat: {letter: 'N', first: 50, second: 40, third: 333},
                     finalLng: {letter: 'E', first: 19, second: 48, third: 888},
                     zones: [],
+                    zonesAlwaysVisible: false,
+                    displayAreaRewards: true,
                 }
             }
         },
@@ -351,6 +371,8 @@
                         finalLng: {letter: 'E', first: 19, second: 48, third: 888},
                         localeCode: 'EN',
                         zones: [],
+                        zonesAlwaysVisible: false,
+                        displayAreaRewards: true,
                     };
                 }
             },

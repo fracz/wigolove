@@ -14,6 +14,7 @@
                            version,
                            author,
                            creationDate,
+                           allZonesVisibleWhenFinished,
                        }, locale) {
 
     let zoneCode = '';
@@ -21,6 +22,18 @@
     let functionsCode = '';
     let mediaCode = '';
     let zoneCounter = 0;
+
+    const pad = (num, size) => {
+        const s = "000000000" + num;
+        return s.substring(s.length - size);
+    };
+
+    const fakeLatSecond = (finalLat.second + (Math.floor(Math.random() * 4) - 2)) % 60;
+    const fakeLngSecond = (finalLng.second + (Math.floor(Math.random() * 4) - 2)) % 60;
+    const fakeLatThird = Math.floor(finalLat.third * Math.random() * 100) % 1000;
+    const fakeLngThird = Math.floor(finalLng.third * Math.random() * 100) % 1000;
+    let fakeCoords = `${finalLat.letter} ${finalLat.first} ${pad(fakeLatSecond, 2)}.${pad(fakeLatThird, 3)}`
+    fakeCoords += ` ${finalLng.letter} ${finalLng.first} ${pad(fakeLngSecond, 2)}.${pad(fakeLngThird, 3)}`
 
     if (coverUrl) {
         const mediaId = crypto.randomUUID();
@@ -107,7 +120,7 @@ objLoveZone${zoneCounter}.InRangeName = ""
         taskCode += `
 objLoveTask${zoneCounter} = Wherigo.ZTask(wigoLove)
 objLoveTask${zoneCounter}.Id = "${taskId}"
-objLoveTask${zoneCounter}.Name = [[${zone.name}]]
+objLoveTask${zoneCounter}.Name = [[${zone.name}${displayAreaRewards ? ` (+${zone.points})` : ''}]]
 objLoveTask${zoneCounter}.Description = [[${zone.description}
 ]]..[[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}]]
 objLoveTask${zoneCounter}.Visible = false
@@ -156,6 +169,7 @@ end
     }
 
     const finalDescription = `[[${locale.finalContent.split('%')[0]}]].."${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.floor(goAndHaveFun/9)).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.floor(cheater+100)).."'"..[[${locale.finalContent.split('%')[1]}]]..[[${hint ? locale.hint + ': ' + hint : ''}]]`;
+    const finalDescriptionFake = `[[${locale.finalContent.split('%')[0]}]]..[[${fakeCoords}]]..[[${locale.finalContent.split('%')[1]}]]`;
 
     return `require "Wherigo"
 ZonePoint = Wherigo.ZonePoint
@@ -381,6 +395,8 @@ _Urwigo.InlineModuleFunc = {}
 
 wigoLove = Wherigo.ZCartridge()
 
+FINAL_DESCRIPTION = ${finalDescriptionFake}
+
 -- Media --
 
 ${mediaCode}
@@ -416,6 +432,8 @@ ${coverUrl ? 'wigoLove.Icon=objLoveCover' : ''}
 
 -- Zones --
 ${zoneCode}
+xcdKranfeg=${finalDescription}
+
 
 -- Items --
 objHowManyLeft = Wherigo.ZItem{
@@ -435,7 +453,7 @@ objHowManyLeft.Opened = false
 objFotohint = Wherigo.ZItem(wigoLove)
 objFotohint.Id = "47b8b44c-db97-4116-a743-cc129c7427ff"
 objFotohint.Name = [[${locale.finalTitle}]]
-objFotohint.Description = ${finalDescription}
+objFotohint.Description = xcdKranfeg
 objFotohint.Visible = true
 ${spoilerUrl ? 'objFotohint.Media = objLoveSpoiler' : ''}
 ${spoilerUrl ? 'objFotohint.Icon = objLoveSpoiler' : ''}
@@ -468,6 +486,18 @@ objTester.Visible = false
 objTester.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objTester.Locked = false
 objTester.Opened = false
+
+objCompletion = Wherigo.ZItem{
+    Cartridge = wigoLove, 
+    Container = Player
+}
+objCompletion.Id = "76a53b31-e5f6-425d-8ed6-88082750cd84"
+objCompletion.Name = [[${locale.completionCodeTitle}]]
+objCompletion.Description = [[]]
+objCompletion.Visible = false
+objCompletion.ObjectLocation = Wherigo.INVALID_ZONEPOINT
+objCompletion.Locked = false
+objCompletion.Opened = false
 
 -- Tasks --
 ${taskCode}
@@ -544,13 +574,25 @@ function objHowManyLeft:OnClick()
     }
 end
 
+function objCompletion:OnClick()
+    _Urwigo.MessageBox{
+        Text = [[${locale.completionCodeContent} ]]..string.sub(Player.CompletionCode, 1, 15), 
+        ${coverUrl ? 'Media = objLoveCover,' : ''} 
+        Callback = function(action)
+            if action ~= nil then
+                Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+            end
+        end
+    }
+end
+
 function objTester:OnClick()
     MakeAllZonesVisible()
 end
 
 function objFotohint:OnClick()
     _Urwigo.MessageBox{
-        Text = ${finalDescription},
+        Text = xcdKranfeg,
         ${spoilerUrl ? 'Media = objLoveSpoiler,' : ''} 
         Callback = function(action)
             if action ~= nil then
@@ -584,7 +626,9 @@ function objFinito()
     else
         objFotohint:MoveTo(Player)
         objHowManyLeft.Visible = false
-        MakeAllZonesVisible()
+        objCompletion.Visible = true
+        wigoLove.Complete = true
+        ${allZonesVisibleWhenFinished ? 'MakeAllZonesVisible()' : ''}
         _Urwigo.MessageBox{
             Text = [[${locale.finalSuccessMessage}]], 
             Callback = function(action)

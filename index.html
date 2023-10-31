@@ -132,8 +132,15 @@
 
         <div class="field">
             <label class="checkbox">
+                <input type="checkbox" v-model="wigo.allZonesVisibleWhenFinished" @change="saveInLocalStorage">
+                All zones visible when completed the task
+            </label>
+        </div>
+
+        <div class="field">
+            <label class="checkbox">
                 <input type="checkbox" v-model="wigo.displayAreaRewards" @change="saveInLocalStorage">
-                Add info about reward for the area to the zone message
+                Add info about reward value for the area
             </label>
         </div>
 
@@ -358,6 +365,7 @@
                     zones: [],
                     zonesAlwaysVisible: false,
                     displayAreaRewards: true,
+                    allZonesVisibleWhenFinished: true,
                     version: 0,
                     creationDate: new Date().toLocaleString("en-US").replace(',', ''),
                 }
@@ -391,6 +399,7 @@
                         zones: [],
                         zonesAlwaysVisible: false,
                         displayAreaRewards: true,
+                        allZonesVisibleWhenFinished: true,
                         version: 0,
                         creationDate: new Date().toLocaleString("en-US").replace(',', ''),
                     };

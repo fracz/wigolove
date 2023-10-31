@@ -9,6 +9,8 @@
         spoiler: "Spoiler",
         welcome: "Welcome %!",
         worthPoints: "This zone was worth % points.",
+        completionCodeTitle: "Completion Code",
+        completionCodeContent: "Your wherigo completion code is:",
     },
     PL: {
         howManyLeftTitle: "Ile zostalo?",
@@ -20,5 +22,7 @@
         spoiler: "Spoiler",
         welcome: "Witaj %!",
         worthPoints: "Ta strefa byla warta % punktow.",
+        completionCodeTitle: "Kod Wherigo",
+        completionCodeContent: "Kod weryfikacyjny wherigo:",
     },
 };

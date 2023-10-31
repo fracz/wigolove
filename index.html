@@ -37,7 +37,7 @@
     <div class="container">
         <div class="is-flex">
             <h1 class="title is-flex-grow-1">
-                <span v-if="wigo.name[currentLocale]">{{ wigo.name[currentLocale] }} ({{ wigo.zones.length }})</span>
+                <span v-if="wigo.name[wigo.lastLocaleCode]">{{ wigo.name[wigo.lastLocaleCode] }} ({{ wigo.zones.length }})</span>
                 <span v-else>WigoLove</span>
             </h1>
             <button type="button" class="button is-small mx-2" @click="clearForm()">Clear form</button>
@@ -56,7 +56,7 @@
         <div class="field">
             <label class="label">Name</label>
             <div class="control">
-                <input class="input" type="text" v-model="wigo.name[currentLocale]" @blur="saveInLocalStorage()">
+                <input class="input" type="text" v-model="wigo.name[wigo.lastLocaleCode]" @blur="saveInLocalStorage()">
             </div>
             <p class="help">Try not to use diacritic characters here.</p>
         </div>
@@ -64,7 +64,7 @@
         <div class="field">
             <label class="label">Description</label>
             <div class="control">
-                <textarea class="textarea" v-model="wigo.description[currentLocale]"
+                <textarea class="textarea" v-model="wigo.description[wigo.lastLocaleCode]"
                           @blur="saveInLocalStorage()"></textarea>
             </div>
             <p class="help">
@@ -185,7 +185,7 @@
                 <div class="field">
                     <label class="label">Hint</label>
                     <div class="control">
-                        <textarea class="textarea" v-model="wigo.hint[currentLocale]"
+                        <textarea class="textarea" v-model="wigo.hint[wigo.lastLocaleCode]"
                                   @blur="saveInLocalStorage()"></textarea>
                     </div>
                     <p class="help">
@@ -218,13 +218,13 @@
         <div v-for="zone in wigo.zones" :key="zone.id" class="my-5 card">
             <div class="card-content">
                 <div class="is-flex mb-2">
-                    <h2 class="title is-flex-grow-1">{{ zone.name[currentLocale] }}</h2>
+                    <h2 class="title is-flex-grow-1">{{ zone.name[wigo.lastLocaleCode] }}</h2>
                     <button class="button is-small" type="button" @click="deleteZone(zone)">Delete</button>
                 </div>
                 <div class="field">
                     <label class="label">Name</label>
                     <div class="control">
-                        <input class="input" type="text" v-model="zone.name[currentLocale]"
+                        <input class="input" type="text" v-model="zone.name[wigo.lastLocaleCode]"
                                @blur="saveInLocalStorage()">
                     </div>
                     <p class="help">Try not to use diacritic characters here.</p>
@@ -233,7 +233,7 @@
                 <div class="field">
                     <label class="label">Description</label>
                     <div class="control">
-                        <textarea class="textarea" v-model="zone.description[currentLocale]"
+                        <textarea class="textarea" v-model="zone.description[wigo.lastLocaleCode]"
                                   @blur="saveInLocalStorage()"></textarea>
                     </div>
                 </div>
@@ -283,7 +283,7 @@
                         Download WigoLove JSON
                     </button>
                     <button type="button" class="button is-success" @click="downloadGwz()">
-                        Download GWZ ({{currentLocale}})
+                        Download GWZ ({{wigo.lastLocaleCode}})
                     </button>
                 </div>
                 <p class="help">Download WigoLove JSON to import it here for editing in the future.</p>
@@ -293,8 +293,8 @@
     </div>
 
     <div class="locale-chooser">
-        <button v-for="locale in availableLocales" :key="locale" @click="currentLocale = locale"
-                :class="['button', {'is-info': currentLocale === locale}]">
+        <button v-for="locale in availableLocales" :key="locale" @click="wigo.lastLocaleCode = locale"
+                :class="['button', {'is-info': wigo.lastLocaleCode === locale}]">
             {{ locale }}
         </button>
     </div>
@@ -332,7 +332,6 @@
                 addingZone: false,
                 editingZone: undefined,
                 currentPolygonCoords: [],
-                currentLocale: 'EN',
                 wigo: {
                     name: {EN: '', PL: ''},
                     description: {EN: '', PL: ''},
@@ -343,6 +342,7 @@
                     startCoordinates: {lat: 50, lng: 19},
                     finalLat: {letter: 'N', first: 50, second: 40, third: 333},
                     finalLng: {letter: 'E', first: 19, second: 48, third: 888},
+                    lastLocaleCode: 'EN',
                     zones: [],
                     zonesAlwaysVisible: false,
                     displayAreaRewards: true,
@@ -369,7 +369,7 @@
                         startCoordinates: {lat: 50, lng: 19},
                         finalLat: {letter: 'N', first: 50, second: 40, third: 333},
                         finalLng: {letter: 'E', first: 19, second: 48, third: 888},
-                        localeCode: 'EN',
+                        lastLocaleCode: 'EN',
                         zones: [],
                         zonesAlwaysVisible: false,
                         displayAreaRewards: true,
@@ -630,16 +630,16 @@
             downloadGwz() {
                 const zip = new JSZip();
                 const wigo = {...this.wigo};
-                wigo.name = wigo.name[this.currentLocale];
-                wigo.description = wigo.description[this.currentLocale];
+                wigo.name = wigo.name[this.wigo.lastLocaleCode];
+                wigo.description = wigo.description[this.wigo.lastLocaleCode];
                 wigo.hint = wigo.description[this.hint];
                 wigo.zones = wigo.zones.map(zone => {
                     const z = {...zone};
-                    z.name = zone.name[this.currentLocale];
-                    z.description = zone.description[this.currentLocale];
+                    z.name = zone.name[this.wigo.lastLocaleCode];
+                    z.description = zone.description[this.wigo.lastLocaleCode];
                     return z;
                 })
-                zip.file("_cartridge.lua", cartridgeCode(wigo, locale[this.currentLocale]));
+                zip.file("_cartridge.lua", cartridgeCode(wigo, locale[this.wigo.lastLocaleCode]));
                 // var img = zip.folder("images");
                 for (let zone of this.wigo.zones) {
                     if (zone.imageUrl) {

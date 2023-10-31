@@ -583,6 +583,7 @@ function objFinito()
         }
     else
         objFotohint:MoveTo(Player)
+        objHowManyLeft.Visible = false
         MakeAllZonesVisible()
         _Urwigo.MessageBox{
             Text = [[${locale.finalSuccessMessage}]], 

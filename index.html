@@ -349,6 +349,7 @@
                     zones: [],
                     zonesAlwaysVisible: false,
                     displayAreaRewards: true,
+                    version: 0,
                 }
             }
         },
@@ -376,6 +377,7 @@
                         zones: [],
                         zonesAlwaysVisible: false,
                         displayAreaRewards: true,
+                        version: 0,
                     };
                 }
             },
@@ -633,6 +635,8 @@
             },
             downloadGwz() {
                 const zip = new JSZip();
+                this.wigo.version = +this.wigo.version + 1;
+                this.saveInLocalStorage();
                 const wigo = {...this.wigo};
                 wigo.name = wigo.name[this.wigo.lastLocaleCode];
                 wigo.description = wigo.description[this.wigo.lastLocaleCode];

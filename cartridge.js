@@ -11,6 +11,7 @@
                            finalLng,
                            zonesAlwaysVisible,
                            displayAreaRewards,
+                           version,
                        }, locale) {
 
     let zoneCode = '';
@@ -391,7 +392,7 @@ wigoLove.Visible=true
 wigoLove.Activity="TourGuide"
 wigoLove.StartingLocationDescription=[[${description}]]
 wigoLove.StartingLocation = ZonePoint(${startCoordinates.lat},${startCoordinates.lng},0)
-wigoLove.Version=""
+wigoLove.Version="ver. ${version}"
 wigoLove.Company=""
 wigoLove.Author="kranfagel"
 wigoLove.BuilderVersion="URWIGO 1.22.5798.37755 & wigoLove by kranfagel"

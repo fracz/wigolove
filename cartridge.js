@@ -12,6 +12,7 @@
                            zonesAlwaysVisible,
                            displayAreaRewards,
                            version,
+                           author,
                        }, locale) {
 
     let zoneCode = '';
@@ -394,7 +395,7 @@ wigoLove.StartingLocationDescription=[[${description}]]
 wigoLove.StartingLocation = ZonePoint(${startCoordinates.lat},${startCoordinates.lng},0)
 wigoLove.Version="ver. ${version}"
 wigoLove.Company=""
-wigoLove.Author="kranfagel"
+wigoLove.Author="${author}"
 wigoLove.BuilderVersion="URWIGO 1.22.5798.37755 & wigoLove by kranfagel"
 wigoLove.CreateDate="11/25/2016 10:38:49"
 wigoLove.PublishDate="1/1/0001 12:00:00 AM"

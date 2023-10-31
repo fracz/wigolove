@@ -77,6 +77,14 @@
         </div>
 
         <div class="field">
+            <label class="label">Author</label>
+            <div class="control">
+                <input class="input" type="text" v-model="wigo.author" @blur="saveInLocalStorage()">
+            </div>
+            <p class="help">I'll be grateful, if you mention me here (<em>kranfagel</em>).</p>
+        </div>
+
+        <div class="field">
             <label class="label">The number of points required to finish the game</label>
             <div class="control">
                 <input class="input" type="number" v-model="wigo.requiredPoints" min="1" max="1000"
@@ -339,6 +347,7 @@
                     name: {EN: '', PL: ''},
                     description: {EN: '', PL: ''},
                     hint: {EN: '', PL: ''},
+                    author: 'kranfagel',
                     requiredPoints: 15,
                     spoilerUrl: '',
                     coverUrl: '',
@@ -367,6 +376,7 @@
                         name: {EN: '', PL: ''},
                         description: {EN: '', PL: ''},
                         hint: {EN: '', PL: ''},
+                        author: 'kranfagel',
                         requiredPoints: 15,
                         spoilerUrl: '',
                         coverUrl: '',

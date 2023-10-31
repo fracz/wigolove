@@ -120,7 +120,7 @@ objLoveTask${zoneCounter}.CorrectState = "None"
 function objLoveZone${zoneCounter}:OnEnter()
     currentZone = "objLoveZone${zoneCounter}"
     if objLoveTask${zoneCounter}.Complete == false then
-        ${zonesAlwaysVisible ? `objLoveTask${zoneCounter}.Visible = true` : ''}
+        objLoveTask${zoneCounter}.Visible = true
         objLoveTask${zoneCounter}.Complete = true
         objLoveZone${zoneCounter}.Visible = true
         wigoLove.RequestSync()
@@ -457,6 +457,18 @@ objZivoty.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objZivoty.Locked = false
 objZivoty.Opened = false
 
+objTester = Wherigo.ZItem{
+    Cartridge = wigoLove, 
+    Container = Player
+}
+objTester.Id = "4b247564-9007-4a78-9fec-b4efa9957a6d"
+objTester.Name = [[Tester]]
+objTester.Description = ""
+objTester.Visible = false
+objTester.ObjectLocation = Wherigo.INVALID_ZONEPOINT
+objTester.Locked = false
+objTester.Opened = false
+
 -- Tasks --
 ${taskCode}
 
@@ -509,6 +521,14 @@ end
 function wigoLove:OnRestore()
 end
 
+function MakeAllZonesVisible()
+  for k,z in ipairs(wigoLove.AllZObjects) do
+    if Wherigo.NoCaseEquals(tostring(z), "a Zone instance") then
+        z.Visible = true
+    end
+  end
+end
+
 ${functionsCode}
 
 
@@ -522,6 +542,10 @@ function objHowManyLeft:OnClick()
             end
         end
     }
+end
+
+function objTester:OnClick()
+    MakeAllZonesVisible()
 end
 
 function objFotohint:OnClick()
@@ -559,6 +583,7 @@ function objFinito()
         }
     else
         objFotohint:MoveTo(Player)
+        MakeAllZonesVisible()
         _Urwigo.MessageBox{
             Text = [[${locale.finalSuccessMessage}]], 
             Callback = function(action)

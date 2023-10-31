@@ -645,7 +645,7 @@
             },
             downloadJson() {
                 const blob = new Blob([JSON.stringify(this.wigo)], {type: "text/plain;charset=utf-8"});
-                const filename = `${slugify(this.wigo.name[this.wigo.lastLocaleCode])}_${this.wigo.lastLocaleCode}_wigolove.json`;
+                const filename = `${slugify(this.wigo.name[this.wigo.lastLocaleCode])}_wigolove.json`;
                 saveAs(blob, filename);
             },
             downloadGwz() {

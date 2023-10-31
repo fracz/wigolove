@@ -13,6 +13,7 @@
                            displayAreaRewards,
                            version,
                            author,
+                           creationDate,
                        }, locale) {
 
     let zoneCode = '';
@@ -118,11 +119,10 @@ objLoveTask${zoneCounter}.CorrectState = "None"
         functionsCode += `
 function objLoveZone${zoneCounter}:OnEnter()
     currentZone = "objLoveZone${zoneCounter}"
-    if objLoveZone${zoneCounter}.Active == true then
---        objLoveTask${zoneCounter}.Visible = true
---        objLoveTask${zoneCounter}.Complete = true
+    if objLoveTask${zoneCounter}.Complete == false then
+        ${zonesAlwaysVisible ? `objLoveTask${zoneCounter}.Visible = true` : ''}
+        objLoveTask${zoneCounter}.Complete = true
         objLoveZone${zoneCounter}.Visible = true
-        objLoveZone${zoneCounter}.Active = false
         wigoLove.RequestSync()
         _Urwigo.MessageBox{
             Text = [[${zone.name}
@@ -396,10 +396,10 @@ wigoLove.StartingLocation = ZonePoint(${startCoordinates.lat},${startCoordinates
 wigoLove.Version="ver. ${version}"
 wigoLove.Company=""
 wigoLove.Author="${author}"
-wigoLove.BuilderVersion="URWIGO 1.22.5798.37755 & wigoLove by kranfagel"
-wigoLove.CreateDate="11/25/2016 10:38:49"
+wigoLove.BuilderVersion="wigoLove 1.0 by kranfagel"
+wigoLove.CreateDate="${creationDate}"
 wigoLove.PublishDate="1/1/0001 12:00:00 AM"
-wigoLove.UpdateDate="02/09/2023 15:40:53"
+wigoLove.UpdateDate="${new Date().toLocaleString("en-US").replace(',', '')}"
 wigoLove.LastPlayedDate="1/1/0001 12:00:00 AM"
 wigoLove.TargetDevice="PocketPC"
 wigoLove.TargetDeviceVersion="0"
@@ -458,7 +458,7 @@ objZivoty.Locked = false
 objZivoty.Opened = false
 
 -- Tasks --
---$ {taskCode}
+${taskCode}
 
 -- Cartridge Variables --
 -- objPamatky = 15

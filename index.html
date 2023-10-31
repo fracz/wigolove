@@ -359,6 +359,7 @@
                     zonesAlwaysVisible: false,
                     displayAreaRewards: true,
                     version: 0,
+                    creationDate: new Date().toLocaleString("en-US").replace(',', ''),
                 }
             }
         },
@@ -366,6 +367,9 @@
             localforage.getItem('wigo').then(wigo => {
                 if (wigo) {
                     this.wigo = JSON.parse(wigo);
+                    if (!this.wigo.creationDate) {
+                        this.wigo.creationDate = new Date().toLocaleString("en-US").replace(',', '');
+                    }
                 }
             });
         },
@@ -388,6 +392,7 @@
                         zonesAlwaysVisible: false,
                         displayAreaRewards: true,
                         version: 0,
+                        creationDate: new Date().toLocaleString("en-US").replace(',', ''),
                     };
                 }
             },

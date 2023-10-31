@@ -114,10 +114,12 @@ objLoveTask${zoneCounter}.CorrectState = "None"
         functionsCode += `
 function objLoveZone${zoneCounter}:OnEnter()
     currentZone = "objLoveZone${zoneCounter}"
-    if objLoveZone${zoneCounter}.Visible == false then
+    if objLoveZone${zoneCounter}.Active == true then
 --        objLoveTask${zoneCounter}.Visible = true
 --        objLoveTask${zoneCounter}.Complete = true
         objLoveZone${zoneCounter}.Visible = true
+        objLoveZone${zoneCounter}.Active = false
+        wigoLove.RequestSync()
         _Urwigo.MessageBox{
             Text = [[${zone.name}
 ]]..[[${zone.description}
@@ -137,6 +139,7 @@ function objLoveZone${zoneCounter}:OnEnter()
                                 if action ~= nil then
                                     Wherigo.ShowScreen(Wherigo.MAINSCREEN)
                                 end
+                                wigoLove.RequestSync()
                             end
                         }
                     end

@@ -30,6 +30,9 @@
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/slugify@1.6.6/slugify.min.js"></script>
     <link rel="stylesheet" href="style.css"/>
+    <script>
+        const VERSION = '1.0.0';
+    </script>
     <script type="text/javascript" src="lang.js"></script>
     <script type="text/javascript" src="cartridge.js"></script>
 </head>
@@ -71,8 +74,8 @@
                           @blur="saveInLocalStorage()"></textarea>
             </div>
             <p class="help">
-                It will be used as the scenario description and it will be displayed as the first message for
-                the user. Welcome user in the place and tell him what is the aim of this game.
+                It will be used as the scenario description and as the first message for
+                the user. Welcome the user and tell them what is the aim of this game.
             </p>
         </div>
 
@@ -81,7 +84,9 @@
             <div class="control">
                 <input class="input" type="text" v-model="wigo.author" @blur="saveInLocalStorage()">
             </div>
-            <p class="help">I'll be grateful, if you mention me here (<em>kranfagel</em>).</p>
+            <p class="help">
+                I'll be grateful, if you mention me here or in the geocache listing 😊 <em>kranfagel</em>
+            </p>
         </div>
 
         <div class="field">
@@ -318,8 +323,10 @@
     </div>
 
     <footer class="has-text-centered mt-6 mb-0 p-0 is-size-7">
-        Made with ❤️ for geocaching and web by <a
-            href="https://www.geocaching.com/p/?guid=49369c87-1a23-4cd6-a054-3c76cf2399f6">kranfagel</a>.
+        Made with ❤️ for geocaching and web by
+        <a href="https://www.geocaching.com/p/?guid=49369c87-1a23-4cd6-a054-3c76cf2399f6">kranfagel</a>.
+        <br>
+        <a href="https://github.com/fracz/wigolove">wigoLove v{{VERSION}}</a>
     </footer>
 
     <div :class="['modal map-modal', {'is-active': mapModalOpened}]">
@@ -346,6 +353,7 @@
     createApp({
         data() {
             return {
+                VERSION,
                 mapModalOpened: false,
                 addingZone: false,
                 editingZone: undefined,

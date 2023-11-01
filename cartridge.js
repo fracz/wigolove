@@ -498,6 +498,8 @@ objCompletion.Visible = false
 objCompletion.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objCompletion.Locked = false
 objCompletion.Opened = false
+${coverUrl ? 'objCompletion.Media=objLoveCover' : ''}
+${coverUrl ? 'objCompletion.Icon=objLoveCover' : ''}
 
 -- Tasks --
 ${taskCode}

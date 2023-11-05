@@ -31,7 +31,7 @@
     <script src="https://cdn.jsdelivr.net/npm/slugify@1.6.6/slugify.min.js"></script>
     <link rel="stylesheet" href="style.css"/>
     <script>
-        const VERSION = '1.1.1';
+        const VERSION = '1.1.2';
     </script>
     <script type="text/javascript" src="lang.js"></script>
     <script type="text/javascript" src="cartridge.js"></script>
@@ -264,7 +264,7 @@
                 <div class="field">
                     <label class="label">Number of points for collecting this zone</label>
                     <div class="control">
-                        <input type="number" class="input" v-model="zone.points" max="5" min="1"
+                        <input type="number" class="input" v-model="zone.points" max="5" min="0"
                                @blur="saveInLocalStorage()">
                     </div>
                 </div>

@@ -450,6 +450,22 @@ objHowManyLeft.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objHowManyLeft.Locked = false
 objHowManyLeft.Opened = false
 
+objDescription = Wherigo.ZItem{
+    Cartridge = wigoLove, 
+    Container = Player
+}
+objDescription.Id = "416c01d5-a102-4916-9cbf-3cf464594b4a"
+objDescription.Name = [[${locale.descriptionTitle}]]
+objDescription.Description = [[${description}]]
+objDescription.Visible = true
+objDescription.Icon = obj
+objDescription.Commands = {}
+objDescription.ObjectLocation = Wherigo.INVALID_ZONEPOINT
+objDescription.Locked = false
+objDescription.Opened = false
+${coverUrl ? 'objDescription.Media=objLoveCover' : ''}
+${coverUrl ? 'objDescription.Icon=objLoveCover' : ''}
+
 objFotohint = Wherigo.ZItem(wigoLove)
 objFotohint.Id = "47b8b44c-db97-4116-a743-cc129c7427ff"
 objFotohint.Name = [[${locale.finalTitle}]]
@@ -461,6 +477,7 @@ objFotohint.Commands = {}
 objFotohint.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objFotohint.Locked = false
 objFotohint.Opened = false
+
 objZivoty = Wherigo.ZItem{
     Cartridge = wigoLove, 
     Container = Player
@@ -592,17 +609,6 @@ function objTester:OnClick()
     MakeAllZonesVisible()
 end
 
-function objFotohint:OnClick()
-    _Urwigo.MessageBox{
-        Text = xcdKranfeg,
-        ${spoilerUrl ? 'Media = objLoveSpoiler,' : ''} 
-        Callback = function(action)
-            if action ~= nil then
-                Wherigo.ShowScreen(Wherigo.MAINSCREEN)
-            end
-        end
-    }
-end
 function objZivoty:OnClick()
     _Urwigo.MessageBox{
         Text = "Pocet zbyvajicich zivotu: "..objzivoty, 

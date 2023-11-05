@@ -1,5 +1,6 @@
 ﻿const locale = {
     EN: {
+        descriptionTitle: "Description",
         howManyLeftTitle: "How many left?",
         howManyLeftContent: "You need to score at least % points more to get the final geocache coordinates!\nKeep loking! :-)",
         finalTitle: "Final geocache",
@@ -13,6 +14,7 @@
         completionCodeContent: "Your wherigo completion code is:",
     },
     PL: {
+        descriptionTitle: "Opis",
         howManyLeftTitle: "Ile zostalo?",
         howManyLeftContent: "Musisz zebrac jeszcze co najmniej % punktow by zdobyc wspolrzedne finalu!\nSzukaj dalej! :-)",
         finalTitle: "Final",

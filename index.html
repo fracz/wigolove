@@ -31,7 +31,7 @@
     <script src="https://cdn.jsdelivr.net/npm/slugify@1.6.6/slugify.min.js"></script>
     <link rel="stylesheet" href="style.css"/>
     <script>
-        const VERSION = '1.1.0';
+        const VERSION = '1.1.1';
     </script>
     <script type="text/javascript" src="lang.js"></script>
     <script type="text/javascript" src="cartridge.js"></script>
@@ -62,7 +62,7 @@
         <div class="field">
             <label class="label">Name</label>
             <div class="control">
-                <input class="input" type="text" v-model="wigo.name[wigo.lastLocaleCode]" @blur="saveInLocalStorage()">
+                <input class="input" type="text" v-model.trim="wigo.name[wigo.lastLocaleCode]" @blur="saveInLocalStorage()">
             </div>
             <p class="help">Try not to use diacritic characters here.</p>
         </div>
@@ -70,7 +70,7 @@
         <div class="field">
             <label class="label">Description</label>
             <div class="control">
-                <textarea class="textarea" v-model="wigo.description[wigo.lastLocaleCode]"
+                <textarea class="textarea" v-model.trim="wigo.description[wigo.lastLocaleCode]"
                           @blur="saveInLocalStorage()"></textarea>
             </div>
             <p class="help">
@@ -82,7 +82,7 @@
         <div class="field">
             <label class="label">Author</label>
             <div class="control">
-                <input class="input" type="text" v-model="wigo.author" @blur="saveInLocalStorage()">
+                <input class="input" type="text" v-model.trim="wigo.author" @blur="saveInLocalStorage()">
             </div>
             <p class="help">
                 I'll be grateful, if you mention me here or in the geocache listing 😊 <em>kranfagel</em>
@@ -208,7 +208,7 @@
                 <div class="field">
                     <label class="label">Hint</label>
                     <div class="control">
-                        <textarea class="textarea" v-model="wigo.hint[wigo.lastLocaleCode]"
+                        <textarea class="textarea" v-model.trim="wigo.hint[wigo.lastLocaleCode]"
                                   @blur="saveInLocalStorage()"></textarea>
                     </div>
                     <p class="help">
@@ -247,7 +247,7 @@
                 <div class="field">
                     <label class="label">Name</label>
                     <div class="control">
-                        <input class="input" type="text" v-model="zone.name[wigo.lastLocaleCode]"
+                        <input class="input" type="text" v-model.trim="zone.name[wigo.lastLocaleCode]"
                                @blur="saveInLocalStorage()">
                     </div>
                     <p class="help">Try not to use diacritic characters here.</p>
@@ -256,7 +256,7 @@
                 <div class="field">
                     <label class="label">Description</label>
                     <div class="control">
-                        <textarea class="textarea" v-model="zone.description[wigo.lastLocaleCode]"
+                        <textarea class="textarea" v-model.trim="zone.description[wigo.lastLocaleCode]"
                                   @blur="saveInLocalStorage()"></textarea>
                     </div>
                 </div>

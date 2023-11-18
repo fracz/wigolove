@@ -144,7 +144,7 @@ function objLoveZone${zoneCounter}:OnEnter()
             ${zone.imageUrl ? `Media = objLoveImage${zoneCounter},` : ''}
             Callback = function(action)
                 if action ~= nil then
-                    objPamatky = objPamatky + -${zone.points}
+                    objPamatky = objPamatky - ${zone.points}
                     if objPamatky <= 0 then
                         objFinito()
                     else

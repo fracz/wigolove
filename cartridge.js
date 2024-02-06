@@ -389,8 +389,6 @@ _Urwigo.Date_SecondInYear = function(t)
     return t.sec + t.min * 60 + t.hour * 3600 + (_Urwigo.Date_DayInYear(t)-1) * 86400
 end
 
-
--- Inlined modules --
 _Urwigo.InlineModuleFunc = {}
 
 wigoLove = Wherigo.ZCartridge()
@@ -432,8 +430,6 @@ ${coverUrl ? 'wigoLove.Icon=objLoveCover' : ''}
 
 -- Zones --
 ${zoneCode}
-xcdKranfeg=${finalDescription}
-
 
 -- Items --
 objHowManyLeft = Wherigo.ZItem{
@@ -466,17 +462,18 @@ objDescription.Opened = false
 ${coverUrl ? 'objDescription.Media=objLoveCover' : ''}
 ${coverUrl ? 'objDescription.Icon=objLoveCover' : ''}
 
-objFotohint = Wherigo.ZItem(wigoLove)
-objFotohint.Id = "47b8b44c-db97-4116-a743-cc129c7427ff"
-objFotohint.Name = [[${locale.finalTitle}]]
-objFotohint.Description = xcdKranfeg
-objFotohint.Visible = true
-${spoilerUrl ? 'objFotohint.Media = objLoveSpoiler' : ''}
-${spoilerUrl ? 'objFotohint.Icon = objLoveSpoiler' : ''}
-objFotohint.Commands = {}
-objFotohint.ObjectLocation = Wherigo.INVALID_ZONEPOINT
-objFotohint.Locked = false
-objFotohint.Opened = false
+zNameBefore = 0
+zoB = 0
+
+for k,z in ipairs(wigoLove.AllZObjects) do
+    if z.Name then
+      zNameBefore = zNameBefore + 1
+      if string.find(z.Name, "b") then
+        zoB = zoB + 1
+      end
+    end
+end
+
 
 objZivoty = Wherigo.ZItem{
     Cartridge = wigoLove, 
@@ -491,18 +488,6 @@ objZivoty.Commands = {}
 objZivoty.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objZivoty.Locked = false
 objZivoty.Opened = false
-
-objTester = Wherigo.ZItem{
-    Cartridge = wigoLove, 
-    Container = Player
-}
-objTester.Id = "4b247564-9007-4a78-9fec-b4efa9957a6d"
-objTester.Name = [[Tester]]
-objTester.Description = ""
-objTester.Visible = false
-objTester.ObjectLocation = Wherigo.INVALID_ZONEPOINT
-objTester.Locked = false
-objTester.Opened = false
 
 objCompletion = Wherigo.ZItem{
     Cartridge = wigoLove, 
@@ -605,9 +590,42 @@ function objCompletion:OnClick()
     }
 end
 
+${false && `
+objTester = Wherigo.ZItem{
+    Cartridge = wigoLove, 
+    Container = Player
+}
+objTester.Id = "4b247564-9007-4a78-9fec-b4efa9957a6d"
+objTester.Name = [[Tester]]
+objTester.Description = ""
+objTester.Visible = true
+objTester.ObjectLocation = Wherigo.INVALID_ZONEPOINT
+objTester.Locked = false
+objTester.Opened = false
 function objTester:OnClick()
     MakeAllZonesVisible()
 end
+`}
+
+zones = 0
+zName = 0
+zoA = 0
+zoM = 0
+for k,z in ipairs(wigoLove.AllZObjects) do
+    if Wherigo.NoCaseEquals(tostring(z), "a Zone instance") then
+        zones = zones + 1
+    end
+    if z.Media then
+      zoM = zoM + 1
+    end
+    if z.Name then
+      zName = zName + 1
+      if string.find(z.Name, "a") then
+        zoA = zoA + 1
+      end
+    end
+end
+
 
 function objZivoty:OnClick()
     _Urwigo.MessageBox{
@@ -619,6 +637,20 @@ function objZivoty:OnClick()
         end
     }
 end
+
+xcdKranfeg=${finalDescription}
+objFotohint = Wherigo.ZItem(wigoLove)
+objFotohint.Id = "47b8b44c-db97-4116-a743-cc129c7427ff"
+objFotohint.Name = [[${locale.finalTitle}]]
+objFotohint.Description = xcdKranfeg
+objFotohint.Visible = true
+${spoilerUrl ? 'objFotohint.Media = objLoveSpoiler' : ''}
+${spoilerUrl ? 'objFotohint.Icon = objLoveSpoiler' : ''}
+objFotohint.Commands = {}
+objFotohint.ObjectLocation = Wherigo.INVALID_ZONEPOINT
+objFotohint.Locked = false
+objFotohint.Opened = false
+
 
 -- Urwigo functions --
 function objFinito()
@@ -638,7 +670,8 @@ function objFinito()
         wigoLove.Complete = true
         ${allZonesVisibleWhenFinished ? 'MakeAllZonesVisible()' : ''}
         _Urwigo.MessageBox{
-            Text = [[${locale.finalSuccessMessage}]], 
+            Text = [[${locale.finalSuccessMessage}
+]]..xcdKranfeg, 
             Callback = function(action)
                 if action ~= nil then
                     objFotohint:OnClick()
@@ -659,6 +692,22 @@ Diky, zes to alespon zkusil.]],
             end
         end
     }
+end
+
+function tasksToGo()
+    cpl = ${requiredPoints}
+    for k,z in ipairs(wigoLove.AllZObjects) do
+        if Wherigo.NoCaseEquals(tostring(z), "a Task instance") then
+            if z.Completed then
+                cpl = cpl - 1
+            end
+        end
+    end
+    if cpl > 0 then
+        return cpl
+    else
+        return 0
+    end
 end
 
 -- Begin user functions --

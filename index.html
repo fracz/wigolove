@@ -65,7 +65,6 @@
                 <input class="input" type="text" v-model.trim="wigo.name[wigo.lastLocaleCode]"
                        @blur="saveInLocalStorage()">
             </div>
-            <p class="help">Try not to use diacritic characters here.</p>
         </div>
 
         <div class="field">
@@ -251,7 +250,6 @@
                         <input class="input" type="text" v-model.trim="zone.name[wigo.lastLocaleCode]"
                                @blur="saveInLocalStorage()">
                     </div>
-                    <p class="help">Try not to use diacritic characters here.</p>
                 </div>
 
                 <div class="field">
@@ -360,7 +358,7 @@
                         Download WigoLove JSON
                     </button>
                     <button type="button" class="button is-success" @click="downloadGwz()">
-                        Download GWZ ({{wigo.lastLocaleCode}})
+                        Download GWZ
                     </button>
                 </div>
                 <p class="help">Download WigoLove JSON to import it here for editing in the future.</p>
@@ -744,17 +742,18 @@
                 this.wigo.version = +this.wigo.version + 1;
                 this.saveInLocalStorage();
                 const wigo = {...this.wigo};
-                wigo.name = wigo.name[this.wigo.lastLocaleCode];
-                wigo.description = wigo.description[this.wigo.lastLocaleCode];
-                wigo.hint = wigo.description[this.hint];
-                wigo.zones = wigo.zones.map(zone => {
-                    const z = {...zone};
-                    z.name = zone.name[this.wigo.lastLocaleCode];
-                    z.description = zone.description[this.wigo.lastLocaleCode];
-                    z.question = zone.question[this.wigo.lastLocaleCode];
-                    return z;
-                })
-                zip.file("_cartridge.lua", cartridgeCode(wigo, locale[this.wigo.lastLocaleCode]));
+                wigo.defaultLocale = this.wigo.lastLocaleCode;
+                // wigo.name = wigo.name[this.wigo.lastLocaleCode];
+                // wigo.description = wigo.description[this.wigo.lastLocaleCode];
+                // wigo.hint = wigo.description[this.hint];
+                // wigo.zones = wigo.zones.map(zone => {
+                //     const z = {...zone};
+                //     z.name = zone.name[this.wigo.lastLocaleCode];
+                //     z.description = zone.description[this.wigo.lastLocaleCode];
+                //     z.question = zone.question[this.wigo.lastLocaleCode];
+                //     return z;
+                // })
+                zip.file("_cartridge.lua", cartridgeCode(wigo));
                 // var img = zip.folder("images");
                 for (let zone of this.wigo.zones) {
                     if (zone.imageUrl) {
@@ -771,7 +770,7 @@
                     zip.file(`cover.jpg`, imageData, {base64: true});
                 }
                 //zip.file('i_love_wigo.json', JSON.stringify(this.wigo));
-                const filename = `${slugify(wigo.name)}_${this.wigo.lastLocaleCode}_wigolove.gwz`;
+                const filename = `${slugify(wigo.name[this.wigo.lastLocaleCode])}_${this.wigo.lastLocaleCode}_wigolove.gwz`;
                 zip.generateAsync({type: "blob"})
                     .then(function (content) {
                         saveAs(content, filename);

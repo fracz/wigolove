@@ -15,18 +15,43 @@
                            author,
                            creationDate,
                            allZonesVisibleWhenFinished,
-                       }, locale) {
+                           defaultLocale,
+                       }) {
 
     let zoneCode = '';
     let taskCode = '';
     let functionsCode = '';
     let mediaCode = '';
     let zoneCounter = 0;
+    let i18nCode = [
+        'wigoLove.Name=i18n("nameSlugified")',
+        'wigoLove.Description=i18n("descriptionSlugified")',
+        'wigoLove.StartingLocationDescription=i18n("description")',
+        'objHowManyLeft.Name = i18n("howManyLeftTitle")',
+        'objFotohint.Name = i18n("finalTitle")',
+        'objDescription.Name = i18n("descriptionTitle")',
+        'objDescription.Description = i18n("description")',
+    ];
     let variablesCode = ["dummyVariable = 0"];
     let latOffsetCode = '0';
     let lngOffsetCode = '0';
     let latOffset = 0;
     let lngOffset = 0;
+    const availableLangs = [defaultLocale];
+    Object.entries(name).forEach(v => {
+        if (name[v[0]] && !availableLangs.includes(v[0])) {
+            availableLangs.push(v[0]);
+        }
+    })
+    const i18n = {};
+    availableLangs.forEach(l => i18n[l] = {
+        name: name[l],
+        nameSlugified: slugify(name[l], {replacement: ' ', remove: /`/g}),
+        description: description[l],
+        descriptionSlugified: slugify(description[l], {replacement: ' ', remove: /`/g}),
+        hint: hint[l],
+        ...locale[l],
+    });
 
     const pad = (num, size) => {
         const s = "000000000" + num;
@@ -42,10 +67,10 @@
 
     if (coverUrl) {
         const mediaId = crypto.randomUUID();
+        i18nCode.push('objLoveCover.Name = i18n("name")')
         mediaCode += `
 objLoveCover = Wherigo.ZMedia(wigoLove)
 objLoveCover.Id = "${mediaId}"
-objLoveCover.Name = [[${name}]]
 objLoveCover.Description = ""
 objLoveCover.AltText = ""
 objLoveCover.Resources = {
@@ -60,10 +85,10 @@ objLoveCover.Resources = {
 
     if (spoilerUrl) {
         const mediaId = crypto.randomUUID();
+        i18nCode.push('objLoveSpoiler.Name = i18n("spoiler")')
         mediaCode += `
 objLoveSpoiler = Wherigo.ZMedia(wigoLove)
 objLoveSpoiler.Id = "${mediaId}"
-objLoveSpoiler.Name = [[${locale.spoiler}]]
 objLoveSpoiler.Description = ""
 objLoveSpoiler.AltText = ""
 objLoveSpoiler.Resources = {
@@ -79,12 +104,17 @@ objLoveSpoiler.Resources = {
     for (let zone of zones) {
         zoneCounter++;
 
+        availableLangs.forEach(l => i18n[l][`zone${zoneCounter}Name`] = zone.name[l]);
+        availableLangs.forEach(l => i18n[l][`zone${zoneCounter}Description`] = zone.description[l]);
+        i18nCode.push(`objLoveZone${zoneCounter}.Name = i18n("zone${zoneCounter}Name")`);
+        i18nCode.push(`objLoveZone${zoneCounter}.Description = i18n("zone${zoneCounter}Description")..${displayAreaRewards ? `i18n("worthPoints", ${zone.points})` : '""'}`);
+
         if (zone.imageUrl) {
+            i18nCode.push(`objLoveImage${zoneCounter}.Name = i18n("zone${zoneCounter}Name")`);
             const mediaId = crypto.randomUUID();
             mediaCode += `
 objLoveImage${zoneCounter} = Wherigo.ZMedia(wigoLove)
 objLoveImage${zoneCounter}.Id = "${mediaId}"
-objLoveImage${zoneCounter}.Name = "${zone.name}"
 objLoveImage${zoneCounter}.Description = ""
 objLoveImage${zoneCounter}.AltText = ""
 objLoveImage${zoneCounter}.Resources = {
@@ -102,9 +132,6 @@ objLoveImage${zoneCounter}.Resources = {
         zoneCode += `
 objLoveZone${zoneCounter} = Wherigo.Zone(wigoLove)
 objLoveZone${zoneCounter}.Id = "${zone.id}"
-objLoveZone${zoneCounter}.Name = [[${zone.name}]]
-objLoveZone${zoneCounter}.Description = [[${zone.description}
-]]..[[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}]]
 objLoveZone${zoneCounter}.Visible = ${zonesAlwaysVisible ? 'true' : 'false'}
 objLoveZone${zoneCounter}.Commands = {}
 objLoveZone${zoneCounter}.DistanceRange = Distance(-1, "feet")
@@ -122,12 +149,13 @@ objLoveZone${zoneCounter}.ProximityRangeUOM = "Meters"
 objLoveZone${zoneCounter}.OutOfRangeName = ""
 objLoveZone${zoneCounter}.InRangeName = ""
 `;
+        availableLangs.forEach(l => i18n[l][`zone${zoneCounter}Name`] = zone.name[l]);
+        availableLangs.forEach(l => i18n[l][`zone${zoneCounter}Description`] = zone.description[l]);
+        i18nCode.push(`objLoveTask${zoneCounter}.Name = i18n("zone${zoneCounter}Name")..[[${displayAreaRewards ? ` (+${zone.points})` : ''}]]`);
+        i18nCode.push(`objLoveTask${zoneCounter}.Description = i18n("zone${zoneCounter}Description")..${displayAreaRewards ? `i18n("worthPoints", ${zone.points})` : '""'}`);
         taskCode += `
 objLoveTask${zoneCounter} = Wherigo.ZTask(wigoLove)
 objLoveTask${zoneCounter}.Id = "${taskId}"
-objLoveTask${zoneCounter}.Name = [[${zone.name}${displayAreaRewards ? ` (+${zone.points})` : ''}]]
-objLoveTask${zoneCounter}.Description = [[${zone.description}
-]]..[[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}]]
 objLoveTask${zoneCounter}.Visible = false
 ${zone.imageUrl ? `objLoveTask${zoneCounter}.Media = objLoveImage${zoneCounter}` : ''}
 objLoveTask${zoneCounter}.Active = true
@@ -142,8 +170,7 @@ objLoveTask${zoneCounter}.CorrectState = "None"
                     objFinito()
                 else
                     _Urwigo.MessageBox{
-                        Text = [[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}
-]]..[[${locale.howManyLeftContent.split('%')[0]}]]..objPamatky..[[${locale.howManyLeftContent.split('%')[1]}]], 
+                        Text = ${displayAreaRewards ? `i18n("worthPoints", ${zone.points})` : '""'}..i18n("howManyLeftContent", objPamatky), 
                         ${coverUrl ? 'Media = objLoveCover,' : ''} 
                         Callback = function(action)
                             Wherigo.ShowScreen(Wherigo.MAINSCREEN)
@@ -162,9 +189,9 @@ function objLoveZone${zoneCounter}:OnEnter()
         ${zone.hasQuestion ? '' : `objLoveTask${zoneCounter}.Complete = true`}
         wigoLove.RequestSync()
         _Urwigo.MessageBox{
-            Text = [[${zone.name}
-]]..[[${zone.description}
-]]..[[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}]], 
+            Text = i18n("zone${zoneCounter}Name") .. [[
+]]..i18n("zone${zoneCounter}Description")..[[
+]]..${displayAreaRewards ? `i18n("worthPoints", ${zone.points})` : '""'}, 
             ${zone.imageUrl ? `Media = objLoveImage${zoneCounter},` : ''}
             Callback = function(action)
                 ${callbackCode}
@@ -174,15 +201,16 @@ function objLoveZone${zoneCounter}:OnEnter()
 end
 `;
         if (zone.hasQuestion) {
+            availableLangs.forEach(l => i18n[l][`zone${zoneCounter}Question`] = zone.question[l]);
+            i18nCode.push(`zinput${zoneCounter}.Name=i18n("questionTitle")`);
+            i18nCode.push(`zinput${zoneCounter}.Text=i18n("zone${zoneCounter}Question")`);
             variablesCode.push(`objAnswer${zoneCounter} = 0`);
             zoneCode += `
 zinput${zoneCounter} = Wherigo.ZInput(wigoLove)
 zinput${zoneCounter}.Id="${crypto.randomUUID()}"
-zinput${zoneCounter}.Name=[[${locale.questionTitle}]]
 zinput${zoneCounter}.Description=[[]]
 zinput${zoneCounter}.Visible=true
 zinput${zoneCounter}.InputType="Text"
-zinput${zoneCounter}.Text=[[${zone.question}]]
 `;
             if (zone.useToCalculateCoords) {
                 const latOffsetMult = Math.ceil(Math.random() * 5);
@@ -237,7 +265,7 @@ end
 function objLoveTask${zoneCounter}:OnClick()
     if not objLoveTask${zoneCounter}.Complete or ${zone.useToCalculateCoords ? 'true' : 'false'} then
         if objLoveTask${zoneCounter}.Complete then
-            zinput${zoneCounter}.Text = [[${zone.question}]] .. [[
+            zinput${zoneCounter}.Text = i18n("zone${zoneCounter}Question") .. [[
 Twoja poprzednia odpowiedz to: ]] .. objAnswer${zoneCounter}
         end
     end
@@ -249,8 +277,8 @@ end
         }
     }
 
-    const finalDescription = `[[${locale.finalContent.split('%')[0]}]].."${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.fmod(goAndHaveFun-123+${latOffsetCode}, 1000)).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.fmod(cheater+100+${lngOffsetCode},1000)).."'"..[[${locale.finalContent.split('%')[1]}]]..[[${hint ? locale.hint + ': ' + hint : ''}]]`;
-    const finalDescriptionFake = `[[${locale.finalContent.split('%')[0]}]]..[[${fakeCoords}]]..[[${locale.finalContent.split('%')[1]}]]`;
+    const finalDescription = `i18n("finalContent", "${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.fmod(goAndHaveFun-123+${latOffsetCode}, 1000)).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.fmod(cheater+100+${lngOffsetCode},1000)).."'")..${hint ? `i18n("hintTitle") .. ": " .. i18n("hint")` : '""'}`;
+    const finalDescriptionFake = `"${fakeCoords}"`;
 
     return `require "Wherigo"
 ZonePoint = Wherigo.ZonePoint
@@ -277,8 +305,6 @@ require "table"
 require "math"
 
 math.randomseed(os.time())
-math.random()
-math.random()
 math.random()
 
 _Urwigo = {}
@@ -474,7 +500,7 @@ _Urwigo.InlineModuleFunc = {}
 
 wigoLove = Wherigo.ZCartridge()
 
-FINAL_DESCRIPTION = ${finalDescriptionFake}
+FINAL_COORDS = ${finalDescriptionFake}
 
 -- Media --
 
@@ -482,11 +508,8 @@ ${mediaCode}
 
 -- Cartridge Info --
 wigoLove.Id="963692b6-8f1a-447b-ae71-649836ead48f"
-wigoLove.Name="${name}"
-wigoLove.Description=[[${description}]]
 wigoLove.Visible=true
 wigoLove.Activity="TourGuide"
-wigoLove.StartingLocationDescription=[[${description}]]
 wigoLove.StartingLocation = ZonePoint(${startCoordinates.lat},${startCoordinates.lng},0)
 wigoLove.Version="ver. ${version}"
 wigoLove.Company=""
@@ -518,7 +541,6 @@ objHowManyLeft = Wherigo.ZItem{
     Container = Player
 }
 objHowManyLeft.Id = "accb593c-d43b-46d7-853b-9d7112bc36e1"
-objHowManyLeft.Name = [[${locale.howManyLeftTitle}]]
 objHowManyLeft.Description = ""
 objHowManyLeft.Visible = true
 objHowManyLeft.Icon = obj
@@ -527,13 +549,35 @@ objHowManyLeft.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objHowManyLeft.Locked = false
 objHowManyLeft.Opened = false
 
+objLang = Wherigo.ZItem{
+    Cartridge = wigoLove, 
+    Container = Player
+}
+objLang.Id = "4e562a11-58c1-4455-877c-d921f34fceeb"
+objLang.Name="Language / Język"
+objLang.Description = ""
+objLang.Visible = ${availableLangs.length > 1 ? 'true' : 'false'}
+objLang.Icon = obj
+objLang.Commands = {}
+objLang.ObjectLocation = Wherigo.INVALID_ZONEPOINT
+objLang.Locked = false
+objLang.Opened = false
+
+zinputLang = Wherigo.ZInput(wigoLove)
+zinputLang.Id="d5150c7c-5322-4cff-bf52-5023db81839b"
+zinputLang.Name="Language / Język"
+zinputLang.Text=[[Choose the language / Wybierz język]]
+zinputLang.Description=[[]]
+zinputLang.Visible=${availableLangs.length > 1 ? 'true' : 'false'}
+zinputLang.InputType="MultipleChoice"
+zinputLang.Choices = {${availableLangs.map(l => `"${l}"`).join(',')}}
+
+
 objDescription = Wherigo.ZItem{
     Cartridge = wigoLove, 
     Container = Player
 }
 objDescription.Id = "416c01d5-a102-4916-9cbf-3cf464594b4a"
-objDescription.Name = [[${locale.descriptionTitle}]]
-objDescription.Description = [[${description}]]
 objDescription.Visible = true
 objDescription.Icon = obj
 objDescription.Commands = {}
@@ -542,19 +586,6 @@ objDescription.Locked = false
 objDescription.Opened = false
 ${coverUrl ? 'objDescription.Media=objLoveCover' : ''}
 ${coverUrl ? 'objDescription.Icon=objLoveCover' : ''}
-
-zNameBefore = 0
-zoB = 0
-
-for k,z in ipairs(wigoLove.AllZObjects) do
-    if z.Name then
-      zNameBefore = zNameBefore + 1
-      if string.find(z.Name, "b") then
-        zoB = zoB + 1
-      end
-    end
-end
-
 
 objZivoty = Wherigo.ZItem{
     Cartridge = wigoLove, 
@@ -598,6 +629,7 @@ currentItem = "objHowManyLeft"
 --currentTask = "objLoveTask1"
 -- currentInput = "objDulHlubina2"
 currentTimer = "dummy"
+currentLanguage = "${defaultLocale}"
 ${variablesCode.join("\n")}
 wigoLove.ZVariables = {
     objPamatky = ${requiredPoints}, 
@@ -609,7 +641,8 @@ wigoLove.ZVariables = {
     currentItem = "objHowManyLeft", 
 --    currentTask = "objLoveTask1", 
 --    currentInput = "objDulHlubina2", 
-    currentTimer = "dummy"
+    currentTimer = "dummy",
+    currentLanguage = "${defaultLocale}"
 }
 
 -- functions --
@@ -629,11 +662,7 @@ function wigoLove:OnStart()
         }
         return
     end
-    _Urwigo.MessageBox{
-        Text = [[${locale.welcome.split('%')[0]}]]..Player.Name..[[${locale.welcome.split('%')[1]}]]..[[
-
-${description}]]
-    }
+    ${availableLangs.length > 1 ? 'Wherigo.GetInput(zinputLang)' : ''}
 end
 function wigoLove:OnRestore()
 end
@@ -651,7 +680,7 @@ ${functionsCode}
 
 function objHowManyLeft:OnClick()
     _Urwigo.MessageBox{
-        Text = [[${locale.howManyLeftContent.split('%')[0]}]]..objPamatky..[[${locale.howManyLeftContent.split('%')[1]}]], 
+        Text = i18n("howManyLeftContent", objPamatky), 
         ${coverUrl ? 'Media = objLoveCover,' : ''} 
         Callback = function(action)
             if action ~= nil then
@@ -663,7 +692,7 @@ end
 
 function objCompletion:OnClick()
     _Urwigo.MessageBox{
-        Text = [[${locale.completionCodeContent} ]]..string.sub(Player.CompletionCode, 1, 15), 
+        Text = i18n("completionCodeContent")..string.sub(Player.CompletionCode, 1, 15), 
         ${coverUrl ? 'Media = objLoveCover,' : ''} 
         Callback = function(action)
             if action ~= nil then
@@ -690,26 +719,6 @@ function objTester:OnClick()
 end
 `}
 
-zones = 0
-zName = 0
-zoA = 0
-zoM = 0
-for k,z in ipairs(wigoLove.AllZObjects) do
-    if Wherigo.NoCaseEquals(tostring(z), "a Zone instance") then
-        zones = zones + 1
-    end
-    if z.Media then
-      zoM = zoM + 1
-    end
-    if z.Name then
-      zName = zName + 1
-      if string.find(z.Name, "a") then
-        zoA = zoA + 1
-      end
-    end
-end
-
-
 function objZivoty:OnClick()
     _Urwigo.MessageBox{
         Text = "Pocet zbyvajicich zivotu: "..objzivoty, 
@@ -721,11 +730,8 @@ function objZivoty:OnClick()
     }
 end
 
-xcdKranfeg=${finalDescription}
 objFotohint = Wherigo.ZItem(wigoLove)
 objFotohint.Id = "47b8b44c-db97-4116-a743-cc129c7427ff"
-objFotohint.Name = [[${locale.finalTitle}]]
-objFotohint.Description = xcdKranfeg
 objFotohint.Visible = true
 ${spoilerUrl ? 'objFotohint.Media = objLoveSpoiler' : ''}
 ${spoilerUrl ? 'objFotohint.Icon = objLoveSpoiler' : ''}
@@ -754,7 +760,7 @@ function objFinito()
         ${allZonesVisibleWhenFinished ? 'MakeAllZonesVisible()' : ''}
         _Urwigo.MessageBox{
             Text = [[${locale.finalSuccessMessage}
-]]..xcdKranfeg, 
+]]..${finalDescription}, 
             Callback = function(action)
                 if action ~= nil then
                     objFotohint:OnClick()
@@ -793,7 +799,35 @@ function tasksToGo()
     end
 end
 
--- Begin user functions --
--- End user functions --
+LANGUAGES = {}
+${availableLangs.map(l => `LANGUAGES["${l}"] = {}`).join("\n")}
+${availableLangs.map(l => Object.entries(i18n[l]).map(v => `LANGUAGES["${l}"]["${v[0]}"] = [[${v[1]}]]`).join("\n")).join("\n")}
+
+function i18n(stringid, variable)
+   value = LANGUAGES[currentLanguage][stringid]
+   if value ~= nil and variable ~= nil then
+     value = string.gsub(value, "%%", variable)
+   end
+   return value
+end
+
+function changeLocale(loc)
+currentLanguage = loc
+${i18nCode.join("\n")}
+wigoLove.RequestSync()
+end
+
+changeLocale(currentLanguage)
+
+function objLang:OnClick()
+    _Urwigo.RunDialogs(function()
+        Wherigo.GetInput(zinputLang)
+    end)
+end
+
+function zinputLang:OnGetInput(input)
+    changeLocale(input)
+end 
+
 return wigoLove`;
 }

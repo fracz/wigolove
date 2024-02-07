@@ -12,6 +12,7 @@
         worthPoints: "This zone was worth % points.",
         completionCodeTitle: "Completion Code",
         completionCodeContent: "Your wherigo completion code is:",
+        questionTitle: "Question",
     },
     PL: {
         descriptionTitle: "Opis",
@@ -26,5 +27,6 @@
         worthPoints: "Ta strefa byla warta % punktow.",
         completionCodeTitle: "Kod Wherigo",
         completionCodeContent: "Kod weryfikacyjny wherigo:",
+        questionTitle: "Pytanie",
     },
 };

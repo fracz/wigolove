@@ -22,6 +22,11 @@
     let functionsCode = '';
     let mediaCode = '';
     let zoneCounter = 0;
+    let variablesCode = ["dummyVariable = 0"];
+    let latOffsetCode = '0';
+    let lngOffsetCode = '0';
+    let latOffset = 0;
+    let lngOffset = 0;
 
     const pad = (num, size) => {
         const s = "000000000" + num;
@@ -129,13 +134,32 @@ objLoveTask${zoneCounter}.Active = true
 objLoveTask${zoneCounter}.Complete = false
 objLoveTask${zoneCounter}.CorrectState = "None"
 `;
+        const callbackCode = zone.hasQuestion ? `
+                Wherigo.GetInput(zinput${zoneCounter})
+        ` : `
+                objPamatky = objPamatky - ${zone.points}
+                if objPamatky <= 0 then
+                    objFinito()
+                else
+                    _Urwigo.MessageBox{
+                        Text = [[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}
+]]..[[${locale.howManyLeftContent.split('%')[0]}]]..objPamatky..[[${locale.howManyLeftContent.split('%')[1]}]], 
+                        ${coverUrl ? 'Media = objLoveCover,' : ''} 
+                        Callback = function(action)
+                            Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+                            wigoLove.RequestSync()
+                        end
+                    }
+                end
+        `;
+
         functionsCode += `
 function objLoveZone${zoneCounter}:OnEnter()
     currentZone = "objLoveZone${zoneCounter}"
-    if objLoveTask${zoneCounter}.Complete == false then
+    if objLoveTask${zoneCounter}.Visible == false then
         objLoveTask${zoneCounter}.Visible = true
-        objLoveTask${zoneCounter}.Complete = true
         objLoveZone${zoneCounter}.Visible = true
+        ${zone.hasQuestion ? '' : `objLoveTask${zoneCounter}.Complete = true`}
         wigoLove.RequestSync()
         _Urwigo.MessageBox{
             Text = [[${zone.name}
@@ -143,32 +167,89 @@ function objLoveZone${zoneCounter}:OnEnter()
 ]]..[[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}]], 
             ${zone.imageUrl ? `Media = objLoveImage${zoneCounter},` : ''}
             Callback = function(action)
-                if action ~= nil then
-                    objPamatky = objPamatky - ${zone.points}
-                    if objPamatky <= 0 then
-                        objFinito()
-                    else
-                        _Urwigo.MessageBox{
-                            Text = [[${displayAreaRewards ? locale.worthPoints.replace('%', zone.points) : ''}
-]]..[[${locale.howManyLeftContent.split('%')[0]}]]..objPamatky..[[${locale.howManyLeftContent.split('%')[1]}]], 
-                            ${coverUrl ? 'Media = objLoveCover,' : ''} 
-                            Callback = function(action)
-                                if action ~= nil then
-                                    Wherigo.ShowScreen(Wherigo.MAINSCREEN)
-                                end
-                                wigoLove.RequestSync()
-                            end
-                        }
-                    end
-                end
+                ${callbackCode}
             end
         }
     end
 end
 `;
+        if (zone.hasQuestion) {
+            variablesCode.push(`objAnswer${zoneCounter} = 0`);
+            zoneCode += `
+zinput${zoneCounter} = Wherigo.ZInput(wigoLove)
+zinput${zoneCounter}.Id="${crypto.randomUUID()}"
+zinput${zoneCounter}.Name=[[${locale.questionTitle}]]
+zinput${zoneCounter}.Description=[[]]
+zinput${zoneCounter}.Visible=true
+zinput${zoneCounter}.InputType="Text"
+zinput${zoneCounter}.Text=[[${zone.question}]]
+`;
+            if (zone.useToCalculateCoords) {
+                const latOffsetMult = Math.ceil(Math.random() * 5);
+                latOffset += +zone.validAnswer * latOffsetMult;
+                latOffsetCode += ` + ${latOffsetMult} * objAnswer${zoneCounter}`;
+                const lngOffsetMult = Math.ceil(Math.random() * 5);
+                lngOffset += +zone.validAnswer * lngOffsetMult;
+                lngOffsetCode += ` + ${lngOffsetMult} * objAnswer${zoneCounter}`;
+
+                zoneCode += `
+function zinput${zoneCounter}:OnGetInput(input)
+    input = tonumber(input)
+    if input == nil then
+        return
+    end
+    objAnswer${zoneCounter} = input
+    objLoveTask${zoneCounter}.Complete = true
+    _Urwigo.MessageBox{
+        Text = [[Twoja odpowiedź została zapisana w scenariuszu. Nie sprawdzaliśmy jej poprawności, ale zostanie ona użyta do obliczenia współrzędnych finału.]],
+        Callback = function(action)
+            Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+        end
+    }
+end                 
+`;
+            } else {
+                zoneCode += `
+function zinput${zoneCounter}:OnGetInput(input)
+    if input == nil or Wherigo.NoCaseEquals(input,"") then
+        return
+    end
+    if Wherigo.NoCaseEquals(input,"${zone.validAnswer}") then
+        _Urwigo.MessageBox{
+            Text = [[Brawo!]],
+            Callback = function(action)
+                Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+            end
+        }
+        objLoveTask${zoneCounter}.Complete = true
+    else
+        _Urwigo.MessageBox{
+            Text = [[Try again!]],
+            Callback = function(action)
+                Wherigo.GetInput(zinput${zoneCounter})
+            end
+        }
+    end
+end                
+`;
+            }
+            taskCode += `
+function objLoveTask${zoneCounter}:OnClick()
+    if not objLoveTask${zoneCounter}.Complete or ${zone.useToCalculateCoords ? 'true' : 'false'} then
+        if objLoveTask${zoneCounter}.Complete then
+            zinput${zoneCounter}.Text = [[${zone.question}]] .. [[
+Twoja poprzednia odpowiedz to: ]] .. objAnswer${zoneCounter}
+        end
+    end
+    _Urwigo.RunDialogs(function()
+        Wherigo.GetInput(zinput${zoneCounter})
+    end)
+end
+`;
+        }
     }
 
-    const finalDescription = `[[${locale.finalContent.split('%')[0]}]].."${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.floor(goAndHaveFun/9)).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.floor(cheater+100)).."'"..[[${locale.finalContent.split('%')[1]}]]..[[${hint ? locale.hint + ': ' + hint : ''}]]`;
+    const finalDescription = `[[${locale.finalContent.split('%')[0]}]].."${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.fmod(goAndHaveFun-123+${latOffsetCode}, 1000)).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.fmod(cheater+100+${lngOffsetCode},1000)).."'"..[[${locale.finalContent.split('%')[1]}]]..[[${hint ? locale.hint + ': ' + hint : ''}]]`;
     const finalDescriptionFake = `[[${locale.finalContent.split('%')[0]}]]..[[${fakeCoords}]]..[[${locale.finalContent.split('%')[1]}]]`;
 
     return `require "Wherigo"
@@ -339,7 +420,7 @@ _Urwigo.Date_DayInYear = function(t)
     end
     return res
 end
-goAndHaveFun = ${finalLat.third * 9}
+goAndHaveFun = ${finalLat.third + 123 - latOffset}
 _Urwigo.Date_HourInWeek = function(t)
     return t.hour + (t.wday-1) * 24
 end
@@ -422,7 +503,7 @@ wigoLove.CountryId="2"
 wigoLove.Complete=false
 wigoLove.UseLogging=true
 afterallItsAboutYouNotMe = ${finalLng.second * 42}
-cheater = ${finalLng.third - 100}
+cheater = ${finalLng.third - 100 - lngOffset}
 
 ${coverUrl ? 'wigoLove.Media=objLoveCover' : ''}
 ${coverUrl ? 'wigoLove.Icon=objLoveCover' : ''}
@@ -517,10 +598,12 @@ currentItem = "objHowManyLeft"
 --currentTask = "objLoveTask1"
 -- currentInput = "objDulHlubina2"
 currentTimer = "dummy"
+${variablesCode.join("\n")}
 wigoLove.ZVariables = {
     objPamatky = ${requiredPoints}, 
     objzivoty = 3, 
-    objdead = true, 
+    objdead = true,
+    ${variablesCode.join(",    \n")},
     currentZone = "objLoveZone1", 
     currentCharacter = "dummy", 
     currentItem = "objHowManyLeft", 

@@ -31,7 +31,7 @@
     <script src="https://cdn.jsdelivr.net/npm/slugify@1.6.6/slugify.min.js"></script>
     <link rel="stylesheet" href="style.css"/>
     <script>
-        const VERSION = '1.2.0';
+        const VERSION = '2.0.0';
     </script>
     <script type="text/javascript" src="lang.js"></script>
     <script type="text/javascript" src="cartridge.js"></script>
@@ -62,7 +62,8 @@
         <div class="field">
             <label class="label">Name</label>
             <div class="control">
-                <input class="input" type="text" v-model.trim="wigo.name[wigo.lastLocaleCode]" @blur="saveInLocalStorage()">
+                <input class="input" type="text" v-model.trim="wigo.name[wigo.lastLocaleCode]"
+                       @blur="saveInLocalStorage()">
             </div>
             <p class="help">Try not to use diacritic characters here.</p>
         </div>
@@ -292,6 +293,59 @@
                         <button class="button is-small" type="button" @click="deleteImage(zone)">Delete image</button>
                     </div>
                 </div>
+
+                <div class="field">
+                    <label class="checkbox">
+                        <input type="checkbox" v-model="zone.hasQuestion" @change="saveInLocalStorage">
+                        Zone has question?
+                    </label>
+                </div>
+
+                <div v-if="zone.hasQuestion">
+                    <div class="field">
+                        <label class="label">Question</label>
+                        <div class="control">
+                            <input class="input" type="text" v-model.trim="zone.question[wigo.lastLocaleCode]"
+                                   @blur="saveInLocalStorage()">
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Answer type</label>
+                        <div class="control">
+                            <label class="radio">
+                                <input type="radio" name="answer" v-model="zone.answerType" value="number"
+                                       @change="saveInLocalStorage"> Number
+                            </label>
+                            <label class="radio">
+                                <input type="radio" name="answer" v-model="zone.answerType" value="text"
+                                       @change="saveInLocalStorage"> Text
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="label">Valid answer</label>
+                        <div class="control">
+                            <input class="input" type="text" v-model.trim="zone.validAnswer" v-if="zone.answerType === 'text'"
+                                   @blur="saveInLocalStorage()">
+                            <input class="input" type="number" v-model.trim="zone.validAnswer" v-else
+                                   @blur="saveInLocalStorage()">
+                        </div>
+                    </div>
+
+                    <div class="field" v-if="zone.answerType === 'number'">
+                        <label class="checkbox">
+                            <input type="checkbox" v-model="zone.useToCalculateCoords" @change="saveInLocalStorage">
+                            Use the valid value to encode coordinates?
+                        </label>
+                        <div class="help">
+                            Cartridge can use the valid number answer to calculate final coordinates shown to the user.
+                            If checked, the answer WILL NOT be validated upon user input, but it will make way harder
+                            to cheat and know the final coordinates without going out.
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -382,14 +436,29 @@
         mounted() {
             localforage.getItem('wigo').then(wigo => {
                 if (wigo) {
-                    this.wigo = JSON.parse(wigo);
-                    if (!this.wigo.creationDate) {
-                        this.wigo.creationDate = new Date().toLocaleString("en-US").replace(',', '');
-                    }
+                    this.loadWigoFromJson(wigo);
+
                 }
             });
         },
         methods: {
+            loadWigoFromJson(json) {
+                const wigo = JSON.parse(json);
+                if (!wigo.creationDate) {
+                    wigo.creationDate = new Date().toLocaleString("en-US").replace(',', '');
+                }
+                wigo.zones.forEach(zone => {
+                    if (zone.hasQuestion === undefined) {
+                        zone.hasQuestion = false;
+                        zone.question = '';
+                        zone.question = {EN: '', PL: ''};
+                        zone.answerType = 'number';
+                        zone.validAnswer = '';
+                        zone.useToCalculateCoords = false;
+                    }
+                });
+                this.wigo = wigo;
+            },
             clearForm() {
                 if (confirm('All data in the form will be lost. Continue?')) {
                     this.wigo = {
@@ -419,7 +488,7 @@
                     const wigo = JSON.parse(evt.target.result);
                     if (wigo && wigo.requiredPoints) {
                         if (confirm('This will overwrite current values. Continue?')) {
-                            this.wigo = wigo;
+                            this.loadWigoFromJson(JSON.stringify(wigo));
                             this.saveInLocalStorage();
                         }
                     } else {
@@ -563,7 +632,12 @@
                             photo: '',
                             points: 1,
                             imageUrl: '',
-                            area: this.currentPolygonCoords
+                            hasQuestion: false,
+                            question: {EN: '', PL: ''},
+                            answerType: 'number',
+                            validAnswer: '',
+                            useToCalculateCoords: false,
+                            area: this.currentPolygonCoords,
                         });
                     }
                 }
@@ -677,6 +751,7 @@
                     const z = {...zone};
                     z.name = zone.name[this.wigo.lastLocaleCode];
                     z.description = zone.description[this.wigo.lastLocaleCode];
+                    z.question = zone.question[this.wigo.lastLocaleCode];
                     return z;
                 })
                 zip.file("_cartridge.lua", cartridgeCode(wigo, locale[this.wigo.lastLocaleCode]));

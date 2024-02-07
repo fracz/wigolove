@@ -162,6 +162,8 @@ objLoveTask${zoneCounter}.Active = true
 objLoveTask${zoneCounter}.Complete = false
 objLoveTask${zoneCounter}.CorrectState = "None"
 `;
+        // TODO nie działa zliczanie zaliczonych stref przy odpowiedzi, bo handler inputa nie zmienia objPamatky. Trzeba przejsc na tasksToGo()
+
         const callbackCode = zone.hasQuestion ? `
                 Wherigo.GetInput(zinput${zoneCounter})
         ` : `

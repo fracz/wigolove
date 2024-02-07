@@ -590,7 +590,7 @@ function objCompletion:OnClick()
     }
 end
 
-${false && `
+${'' && `
 objTester = Wherigo.ZItem{
     Cartridge = wigoLove, 
     Container = Player
@@ -697,8 +697,8 @@ end
 function tasksToGo()
     cpl = ${requiredPoints}
     for k,z in ipairs(wigoLove.AllZObjects) do
-        if Wherigo.NoCaseEquals(tostring(z), "a Task instance") then
-            if z.Completed then
+        if Wherigo.NoCaseEquals(tostring(z), "a ZTask instance") then
+            if z.Complete then
                 cpl = cpl - 1
             end
         end

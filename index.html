@@ -131,14 +131,21 @@
         <div class="field">
             <label class="checkbox">
                 <input type="checkbox" v-model="wigo.zonesAlwaysVisible" @change="saveInLocalStorage">
-                Zones always visible
+                All zones visible from the start of the game
+            </label>
+        </div>
+
+        <div class="field">
+            <label class="checkbox">
+                <input type="checkbox" v-model="wigo.hideZoneAfterEnter" @change="saveInLocalStorage">
+                Hide zone after entering it
             </label>
         </div>
 
         <div class="field">
             <label class="checkbox">
                 <input type="checkbox" v-model="wigo.allZonesVisibleWhenFinished" @change="saveInLocalStorage">
-                All zones visible when completed the task
+                All zones visible when completed the game
             </label>
         </div>
 
@@ -425,6 +432,7 @@
                     lastLocaleCode: 'EN',
                     zones: [],
                     zonesAlwaysVisible: false,
+                    hideZoneAfterEnter: false,
                     displayAreaRewards: true,
                     allZonesVisibleWhenFinished: true,
                     version: 0,
@@ -445,6 +453,9 @@
                 const wigo = JSON.parse(json);
                 if (!wigo.creationDate) {
                     wigo.creationDate = new Date().toLocaleString("en-US").replace(',', '');
+                }
+                if (!wigo.hideZoneAfterEnter) {
+                    wigo.hideZoneAfterEnter = false;
                 }
                 wigo.zones.forEach(zone => {
                     if (zone.hasQuestion === undefined) {
@@ -474,6 +485,7 @@
                         lastLocaleCode: 'EN',
                         zones: [],
                         zonesAlwaysVisible: false,
+                        hideZoneAfterEnter: false,
                         displayAreaRewards: true,
                         allZonesVisibleWhenFinished: true,
                         version: 0,

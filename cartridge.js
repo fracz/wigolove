@@ -10,6 +10,7 @@
                            finalLat,
                            finalLng,
                            zonesAlwaysVisible,
+                           hideZoneAfterEnter,
                            displayAreaRewards,
                            version,
                            author,
@@ -215,7 +216,7 @@ function objLoveZone${zoneCounter}:OnEnter()
     currentZone = "objLoveZone${zoneCounter}"
     if objLoveTask${zoneCounter}.Visible == false then
         objLoveTask${zoneCounter}.Visible = true
-        objLoveZone${zoneCounter}.Visible = true
+        objLoveZone${zoneCounter}.Visible = ${hideZoneAfterEnter ? 'false' : 'true'}
         ${zone.hasQuestion ? '' : `objLoveTask${zoneCounter}.Complete = true`}
         wigoLove.RequestSync()
         _Urwigo.MessageBox{

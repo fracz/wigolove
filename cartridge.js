@@ -31,6 +31,7 @@
         'objFotohint.Name = i18n("finalTitle")',
         'objDescription.Name = i18n("descriptionTitle")',
         'objDescription.Description = i18n("description")',
+            'objCompletion.Name = i18n("completionCodeTitle")',
     ];
     let variablesCode = ["dummyVariable = 0"];
     let latOffsetCode = '0';
@@ -62,6 +63,7 @@
     const fakeLngSecond = (finalLng.second + (Math.floor(Math.random() * 4) - 2)) % 60;
     const fakeLatThird = Math.floor(finalLat.third * Math.random() * 100) % 1000;
     const fakeLngThird = Math.floor(finalLng.third * Math.random() * 100) % 1000;
+    const fakeFinalOffset = Math.random() - 0.5;
     let fakeCoords = `${finalLat.letter} ${finalLat.first} ${pad(fakeLatSecond, 2)}.${pad(fakeLatThird, 3)}`
     fakeCoords += ` ${finalLng.letter} ${finalLng.first} ${pad(fakeLngSecond, 2)}.${pad(fakeLngThird, 3)}`
 
@@ -151,7 +153,7 @@ objLoveZone${zoneCounter}.InRangeName = ""
 `;
         availableLangs.forEach(l => i18n[l][`zone${zoneCounter}Name`] = zone.name[l]);
         availableLangs.forEach(l => i18n[l][`zone${zoneCounter}Description`] = zone.description[l]);
-        i18nCode.push(`objLoveTask${zoneCounter}.Name = i18n("zone${zoneCounter}Name")..[[${displayAreaRewards ? ` (+${zone.points})` : ''}]]`);
+        i18nCode.push(`objLoveTask${zoneCounter}.Name = i18n("zone${zoneCounter}Name")..[[${displayAreaRewards ? ` (+${zone.points})` : ''}]].."${zone.useToCalculateCoords ? '*' : ''}"`);
         i18nCode.push(`objLoveTask${zoneCounter}.Description = i18n("zone${zoneCounter}Description")..${displayAreaRewards ? `i18n("worthPoints", ${zone.points})` : '""'}`);
         taskCode += `
 objLoveTask${zoneCounter} = Wherigo.ZTask(wigoLove)
@@ -162,12 +164,12 @@ objLoveTask${zoneCounter}.Active = true
 objLoveTask${zoneCounter}.Complete = false
 objLoveTask${zoneCounter}.CorrectState = "None"
 `;
-        // TODO nie działa zliczanie zaliczonych stref przy odpowiedzi, bo handler inputa nie zmienia objPamatky. Trzeba przejsc na tasksToGo()
-
-        const callbackCode = zone.hasQuestion ? `
-                Wherigo.GetInput(zinput${zoneCounter})
-        ` : `
+        const decrementCode = `
                 objPamatky = objPamatky - ${zone.points}
+                if objPamatky <= 0 then
+                    objPamatky = 0
+                end
+                wigoLove.RequestSync()
                 if objPamatky <= 0 then
                     objFinito()
                 else
@@ -175,12 +177,13 @@ objLoveTask${zoneCounter}.CorrectState = "None"
                         Text = ${displayAreaRewards ? `i18n("worthPoints", ${zone.points})` : '""'}..i18n("howManyLeftContent", objPamatky), 
                         ${coverUrl ? 'Media = objLoveCover,' : ''} 
                         Callback = function(action)
-                            Wherigo.ShowScreen(Wherigo.MAINSCREEN)
-                            wigoLove.RequestSync()
+                           Wherigo.ShowScreen(Wherigo.MAINSCREEN)
                         end
                     }
                 end
         `;
+
+        const callbackCode = zone.hasQuestion ? `Wherigo.GetInput(zinput${zoneCounter})` : decrementCode;
 
         functionsCode += `
 function objLoveZone${zoneCounter}:OnEnter()
@@ -229,32 +232,36 @@ function zinput${zoneCounter}:OnGetInput(input)
         return
     end
     objAnswer${zoneCounter} = input
-    objLoveTask${zoneCounter}.Complete = true
-    _Urwigo.MessageBox{
-        Text = [[Twoja odpowiedź została zapisana w scenariuszu. Nie sprawdzaliśmy jej poprawności, ale zostanie ona użyta do obliczenia współrzędnych finału.]],
-        Callback = function(action)
-            Wherigo.ShowScreen(Wherigo.MAINSCREEN)
-        end
-    }
+    if not objLoveTask${zoneCounter}.Complete then
+        objLoveTask${zoneCounter}.Complete = true
+        _Urwigo.MessageBox{
+            Text = i18n("answerNoValidation", i18n("zone${zoneCounter}Name")),
+            Callback = function(action)
+                ${decrementCode}
+            end
+        }
+    else
+        wigoLove.RequestSync()
+    end
 end                 
 `;
             } else {
                 zoneCode += `
 function zinput${zoneCounter}:OnGetInput(input)
-    if input == nil or Wherigo.NoCaseEquals(input,"") then
+    if input == nil or Wherigo.NoCaseEquals(input,"") or objLoveTask${zoneCounter}.Complete then
         return
     end
     if Wherigo.NoCaseEquals(input,"${zone.validAnswer}") then
+        objLoveTask${zoneCounter}.Complete = true
         _Urwigo.MessageBox{
-            Text = [[Brawo!]],
+            Text = i18n("correctAnswerMessage"),
             Callback = function(action)
-                Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+                ${decrementCode}
             end
         }
-        objLoveTask${zoneCounter}.Complete = true
     else
         _Urwigo.MessageBox{
-            Text = [[Try again!]],
+            Text = i18n("invalidAnswerMessage"),
             Callback = function(action)
                 Wherigo.GetInput(zinput${zoneCounter})
             end
@@ -268,18 +275,18 @@ function objLoveTask${zoneCounter}:OnClick()
     if not objLoveTask${zoneCounter}.Complete or ${zone.useToCalculateCoords ? 'true' : 'false'} then
         if objLoveTask${zoneCounter}.Complete then
             zinput${zoneCounter}.Text = i18n("zone${zoneCounter}Question") .. [[
-Twoja poprzednia odpowiedz to: ]] .. objAnswer${zoneCounter}
+]] .. i18n("yourPreviousAnswerIs", objAnswer${zoneCounter})
         end
+        _Urwigo.RunDialogs(function()
+            Wherigo.GetInput(zinput${zoneCounter})
+        end)
     end
-    _Urwigo.RunDialogs(function()
-        Wherigo.GetInput(zinput${zoneCounter})
-    end)
 end
 `;
         }
     }
 
-    const finalDescription = `i18n("finalContent", "${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.fmod(goAndHaveFun-123+${latOffsetCode}, 1000)).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.fmod(cheater+100+${lngOffsetCode},1000)).."'")..${hint ? `i18n("hintTitle") .. ": " .. i18n("hint")` : '""'}`;
+    const finalDescription = `i18n("finalContent", "${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.fmod(goAndHaveFun-123+${latOffsetCode}, 1000)).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.fmod(cheater+100+${lngOffsetCode},1000)).."'")..${hint ? `i18n("hintTitle") .. ": " .. i18n("hint")` : '""'}..${latOffset ? 'i18n("coordinatesCalculationWarning")' : '""'}`;
     const finalDescriptionFake = `"${fakeCoords}"`;
 
     return `require "Wherigo"
@@ -537,6 +544,29 @@ ${coverUrl ? 'wigoLove.Icon=objLoveCover' : ''}
 -- Zones --
 ${zoneCode}
 
+objLoveZoneFinish = Wherigo.Zone(wigoLove)
+objLoveZoneFinish.Id = "ec6f16d3-4d67-4ab9-92ea-6c96452547c8"
+objLoveZoneFinish.Name = [[Final]]
+objLoveZoneFinish.Description = [[Final geocache is here. Good luck!
+]]..[[]]
+objLoveZoneFinish.Visible = false
+objLoveZoneFinish.Commands = {}
+objLoveZoneFinish.DistanceRange = Distance(-1, "feet")
+objLoveZoneFinish.ShowObjects = "OnEnter"
+objLoveZoneFinish.ProximityRange = Distance(60, "meters")
+objLoveZoneFinish.AllowSetPositionTo = false
+objLoveZoneFinish.Active = false
+objLoveZoneFinish.Points = {
+    ZonePoint(${startCoordinates.lat + fakeFinalOffset}, ${startCoordinates.lng + fakeFinalOffset}, 0),
+    ZonePoint(${startCoordinates.lat + fakeFinalOffset + 0.00000001}, ${startCoordinates.lng + fakeFinalOffset + 0.00000001}, 0),
+    ZonePoint(${startCoordinates.lat + fakeFinalOffset - 0.00000001}, ${startCoordinates.lng + fakeFinalOffset + 0.00000001}, 0)
+}
+objLoveZoneFinish.OriginalPoint = ZonePoint(50.05334182188759, 19.84133129298305, 0)
+objLoveZoneFinish.DistanceRangeUOM = "Feet"
+objLoveZoneFinish.ProximityRangeUOM = "Meters"
+objLoveZoneFinish.OutOfRangeName = ""
+objLoveZoneFinish.InRangeName = ""
+
 -- Items --
 objHowManyLeft = Wherigo.ZItem{
     Cartridge = wigoLove, 
@@ -589,26 +619,11 @@ objDescription.Opened = false
 ${coverUrl ? 'objDescription.Media=objLoveCover' : ''}
 ${coverUrl ? 'objDescription.Icon=objLoveCover' : ''}
 
-objZivoty = Wherigo.ZItem{
-    Cartridge = wigoLove, 
-    Container = Player
-}
-objZivoty.Id = "04f7dbc8-7e62-417a-8d8b-617a5685a25b"
-objZivoty.Name = "Zivoty"
-objZivoty.Description = ""
-objZivoty.Visible = false
-objZivoty.Icon = objsrdicko
-objZivoty.Commands = {}
-objZivoty.ObjectLocation = Wherigo.INVALID_ZONEPOINT
-objZivoty.Locked = false
-objZivoty.Opened = false
-
 objCompletion = Wherigo.ZItem{
     Cartridge = wigoLove, 
     Container = Player
 }
 objCompletion.Id = "76a53b31-e5f6-425d-8ed6-88082750cd84"
-objCompletion.Name = [[${locale.completionCodeTitle}]]
 objCompletion.Description = [[]]
 objCompletion.Visible = false
 objCompletion.ObjectLocation = Wherigo.INVALID_ZONEPOINT
@@ -623,7 +638,6 @@ ${taskCode}
 -- Cartridge Variables --
 -- objPamatky = 15
 objPamatky = ${requiredPoints}
-objzivoty = 3
 objdead = true
 currentZone = "objLoveZone1"
 currentCharacter = "dummy"
@@ -635,7 +649,6 @@ currentLanguage = "${defaultLocale}"
 ${variablesCode.join("\n")}
 wigoLove.ZVariables = {
     objPamatky = ${requiredPoints}, 
-    objzivoty = 3, 
     objdead = true,
     ${variablesCode.join(",    \n")},
     currentZone = "objLoveZone1", 
@@ -721,17 +734,6 @@ function objTester:OnClick()
 end
 `}
 
-function objZivoty:OnClick()
-    _Urwigo.MessageBox{
-        Text = "Pocet zbyvajicich zivotu: "..objzivoty, 
-        Callback = function(action)
-            if action ~= nil then
-                Wherigo.ShowScreen(Wherigo.INVENTORYSCREEN)
-            end
-        end
-    }
-end
-
 objFotohint = Wherigo.ZItem(wigoLove)
 objFotohint.Id = "47b8b44c-db97-4116-a743-cc129c7427ff"
 objFotohint.Visible = true
@@ -742,45 +744,27 @@ objFotohint.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objFotohint.Locked = false
 objFotohint.Opened = false
 
-
--- Urwigo functions --
-function objFinito()
-    if objdead == false then
-        _Urwigo.MessageBox{
-            Text = "Bohuzel jsi ztratil vsechny zivoty a na finalku nemas narok. Promin. Varovan jsi byl...", 
-            Callback = function(action)
-                if action ~= nil then
-                    Wherigo.Command "SaveClose"
-                end
-            end
-        }
-    else
-        objFotohint:MoveTo(Player)
-        objHowManyLeft.Visible = false
-        objCompletion.Visible = true
-        wigoLove.Complete = true
-        ${allZonesVisibleWhenFinished ? 'MakeAllZonesVisible()' : ''}
-        _Urwigo.MessageBox{
-            Text = [[${locale.finalSuccessMessage}
-]]..${finalDescription}, 
-            Callback = function(action)
-                if action ~= nil then
-                    objFotohint:OnClick()
-                end
-            end
-        }
-    end
-end
-function objdead1()
-    objdead = false
-    wigoLove:RequestSync()
+function objFotohint:OnClick()
     _Urwigo.MessageBox{
-        Text = [[Prisel jsi o vsechny zivoty. Hra se neukonci, muzes pamatky hledat dale, ale k finalce uz se nedostanes. Muzes si zapnout novou hru.
-Diky, zes to alespon zkusil.]], 
+        Text = ${finalDescription}, 
+        ${spoilerUrl ? 'Media = objLoveSpoiler,' : ''} 
         Callback = function(action)
-            if action ~= nil then
-                Wherigo.Command "SaveClose"
-            end
+           Wherigo.ShowScreen(Wherigo.INVENTORYSCREEN)
+        end
+    }
+end
+
+function objFinito()
+    objFotohint:MoveTo(Player)
+    objHowManyLeft.Visible = false
+    objCompletion.Visible = true
+    wigoLove.Complete = true
+    ${allZonesVisibleWhenFinished ? 'MakeAllZonesVisible()' : ''}
+    _Urwigo.MessageBox{
+        Text = i18n("finalSuccessMessage") .. [[
+]]..${finalDescription}, 
+        Callback = function(action)
+            Wherigo.ShowScreen(Wherigo.INVENTORYSCREEN)
         end
     }
 end

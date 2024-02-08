@@ -67,6 +67,31 @@
     let fakeCoords = `${finalLat.letter} ${finalLat.first} ${pad(fakeLatSecond, 2)}.${pad(fakeLatThird, 3)}`
     fakeCoords += ` ${finalLng.letter} ${finalLng.first} ${pad(fakeLngSecond, 2)}.${pad(fakeLngThird, 3)}`
 
+    mediaCode += `
+objLoveLanguageIcon = Wherigo.ZMedia(wigoLove)
+objLoveLanguageIcon.Id = "1c23f33a-c2ff-4c14-838a-79f7c5399eec"
+objLoveLanguageIcon.Description = ""
+objLoveLanguageIcon.AltText = ""
+objLoveLanguageIcon.Resources = {
+    {
+        Type = "jpg", 
+        Filename = "language.jpg", 
+        Directives = {}
+    }
+}
+objLoveQuestionIcon = Wherigo.ZMedia(wigoLove)
+objLoveQuestionIcon.Id = "b847bd1f-b915-4076-9bf5-d29bf1807e26"
+objLoveQuestionIcon.Description = ""
+objLoveQuestionIcon.AltText = ""
+objLoveQuestionIcon.Resources = {
+    {
+        Type = "jpg", 
+        Filename = "question.jpg", 
+        Directives = {}
+    }
+}
+`;
+
     if (coverUrl) {
         const mediaId = crypto.randomUUID();
         i18nCode.push('objLoveCover.Name = i18n("name")')
@@ -575,11 +600,11 @@ objHowManyLeft = Wherigo.ZItem{
 objHowManyLeft.Id = "accb593c-d43b-46d7-853b-9d7112bc36e1"
 objHowManyLeft.Description = ""
 objHowManyLeft.Visible = true
-objHowManyLeft.Icon = obj
 objHowManyLeft.Commands = {}
 objHowManyLeft.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objHowManyLeft.Locked = false
 objHowManyLeft.Opened = false
+objHowManyLeft.Icon = objLoveQuestionIcon
 
 objLang = Wherigo.ZItem{
     Cartridge = wigoLove, 
@@ -589,11 +614,11 @@ objLang.Id = "4e562a11-58c1-4455-877c-d921f34fceeb"
 objLang.Name="Language / Język"
 objLang.Description = ""
 objLang.Visible = ${availableLangs.length > 1 ? 'true' : 'false'}
-objLang.Icon = obj
 objLang.Commands = {}
 objLang.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objLang.Locked = false
 objLang.Opened = false
+objLang.Icon=objLoveLanguageIcon
 
 zinputLang = Wherigo.ZInput(wigoLove)
 zinputLang.Id="d5150c7c-5322-4cff-bf52-5023db81839b"

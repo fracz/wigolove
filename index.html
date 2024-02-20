@@ -31,7 +31,7 @@
     <script src="https://cdn.jsdelivr.net/npm/slugify@1.6.6/slugify.min.js"></script>
     <link rel="stylesheet" href="style.css"/>
     <script>
-        const VERSION = '2.0.0';
+        const VERSION = '2.1.0';
     </script>
     <script type="text/javascript" src="lang.js"></script>
     <script type="text/javascript" src="cartridge.js"></script>
@@ -355,7 +355,7 @@
             </div>
         </div>
 
-        <div class="is-flex">
+        <div class="is-flex mb-5">
             <div class="is-flex-grow-1">
                 <button class="button button-primary" @click="addZone()">Add new zone</button>
             </div>
@@ -372,6 +372,26 @@
                 <p class="help">Download WigoLove JSON to import it here for editing in the future.</p>
                 <p class="help">Download GWZ for compiling on wherigo.com website.</p>
             </div>
+        </div>
+    </div>
+
+    <div class="example-listing container has-background-grey-lighter p-3 content">
+        <div v-for="lang in filledLocales" :key="lang">
+            <h2 v-if="filledLocales.length > 1">
+                <span v-if="lang === 'PL'">🇵🇱</span>
+                <span v-else-if="lang === 'EN'">🇬🇧</span>
+                {{ lang }}
+            </h2>
+            <p v-for="par in paragraphs(wigo.description[lang])">{{ par }}</p>
+            <div v-for="(zone, index) in wigo.zones">
+                <h4>{{ zone.name[lang] }}</h4>
+                <p v-for="par in paragraphs(zone.description[lang])">{{ par }}</p>
+                <div v-if="zone.hasQuestion && zone.useToCalculateCoords">
+                    <blockquote>{{ zoneAnswerLetters[index] }} = {{ zone.question[lang] }}</blockquote>
+                </div>
+            </div>
+                <h3>{{ locale[lang].finalTitle }}</h3>
+            <p><code>{{ finalFormula }}</code></p>
         </div>
     </div>
 
@@ -418,6 +438,7 @@
                 addingZone: false,
                 editingZone: undefined,
                 currentPolygonCoords: [],
+                locale,
                 wigo: {
                     name: {EN: '', PL: ''},
                     description: {EN: '', PL: ''},
@@ -449,6 +470,9 @@
             });
         },
         methods: {
+            paragraphs(text) {
+                return text?.split ? text.split("\n").map(t => t.trim()).filter(t => t) : [""];
+            },
             loadWigoFromJson(json) {
                 const wigo = JSON.parse(json);
                 if (!wigo.creationDate) {
@@ -800,9 +824,50 @@
             availableLocales() {
                 return Object.keys(locale);
             },
+            filledLocales() {
+                const availableLangs = [this.wigo.lastLocaleCode];
+                this.availableLocales.forEach(v => {
+                    if (this.wigo.name[v] && !availableLangs.includes(v)) {
+                        availableLangs.push(v);
+                    }
+                });
+                return availableLangs;
+            },
             totalPoints() {
                 return this.wigo.zones.map(z => z.points).reduce((a, b) => a + b, 0);
-            }
+            },
+            zoneAnswerLetters() {
+                const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U'];
+                return this.wigo.zones.map((zone) => zone.hasQuestion && zone.useToCalculateCoords ? letters.shift() : 0);
+            },
+            finalFormula() {
+                const c = {
+                    lat: 0,
+                    lng: 0,
+                    latFormula: 'A',
+                    lngFormula: 'A',
+                };
+                this.wigo.zones.forEach((zone, index) => {
+                    if (zone.hasQuestion && zone.useToCalculateCoords) {
+                        const letter = this.zoneAnswerLetters[index];
+                        if (letter === 'A') {
+                            c.lat += zone.validAnswer;
+                            c.lng += zone.validAnswer;
+                        } else {
+                            const field = Math.random() < .5 ? 'lat' : 'lng';
+                            const add = Math.random() < .5;
+                            c[field] += zone.validAnswer * (add ? 1 : -1);
+                            c[`${field}Formula`] += (add ? '+' : '-') + letter;
+                        }
+                    }
+                });
+                const latDiff = c.lat - this.wigo.finalLat.third;
+                c.latFormula += (latDiff > 0 ? '-' : '+') + Math.abs(latDiff);
+                const lngDiff = c.lng - this.wigo.finalLng.third;
+                c.lngFormula += (lngDiff > 0 ? '-' : '+') + Math.abs(lngDiff);
+                return `${ this.wigo.finalLat.letter } ${this.pad(this.wigo.finalLat.first, 2)}° ${this.pad(this.wigo.finalLat.second, 2)}.(${c.latFormula})'` +
+                    `${ this.wigo.finalLng.letter } ${this.pad(this.wigo.finalLng.first, 2)}° ${this.pad(this.wigo.finalLng.second, 2)}.(${c.lngFormula})'`;
+            },
         }
     }).mount('#app');
 </script>

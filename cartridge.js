@@ -32,7 +32,7 @@
         'objFotohint.Name = i18n("finalTitle")',
         'objDescription.Name = i18n("descriptionTitle")',
         'objDescription.Description = i18n("description")',
-            'objCompletion.Name = i18n("completionCodeTitle")',
+        'objCompletion.Name = i18n("completionCodeTitle")',
     ];
     let variablesCode = ["dummyVariable = 0"];
     let latOffsetCode = '0';
@@ -160,6 +160,7 @@ objLoveImage${zoneCounter}.Resources = {
         zoneCode += `
 objLoveZone${zoneCounter} = Wherigo.Zone(wigoLove)
 objLoveZone${zoneCounter}.Id = "${zone.id}"
+objLoveZone${zoneCounter}.Name = [[${zone.name[availableLangs[0]]}]]
 objLoveZone${zoneCounter}.Visible = ${zonesAlwaysVisible ? 'true' : 'false'}
 objLoveZone${zoneCounter}.Commands = {}
 objLoveZone${zoneCounter}.DistanceRange = Distance(-1, "feet")
@@ -184,6 +185,7 @@ objLoveZone${zoneCounter}.InRangeName = ""
         taskCode += `
 objLoveTask${zoneCounter} = Wherigo.ZTask(wigoLove)
 objLoveTask${zoneCounter}.Id = "${taskId}"
+objLoveTask${zoneCounter}.Name = [[${zone.name[availableLangs[0]]}]]
 objLoveTask${zoneCounter}.Visible = false
 ${zone.imageUrl ? `objLoveTask${zoneCounter}.Media = objLoveImage${zoneCounter}` : ''}
 objLoveTask${zoneCounter}.Active = true
@@ -213,7 +215,7 @@ objLoveTask${zoneCounter}.CorrectState = "None"
 
         functionsCode += `
 function objLoveZone${zoneCounter}:OnEnter()
-    currentZone = "objLoveZone${zoneCounter}"
+ --   currentZone = "objLoveZone${zoneCounter}"
     if objLoveTask${zoneCounter}.Visible == false then
         objLoveTask${zoneCounter}.Visible = true
         objLoveZone${zoneCounter}.Visible = ${hideZoneAfterEnter ? 'false' : 'true'}
@@ -312,7 +314,7 @@ end
         }
     }
 
-    const finalDescription = `i18n("finalContent", "${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.fmod(goAndHaveFun-123+${latOffsetCode}, 1000)).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.fmod(cheater+100+${lngOffsetCode},1000)).."'")..${hint ? `i18n("hintTitle") .. ": " .. i18n("hint")` : '""'}..${latOffset ? 'i18n("coordinatesCalculationWarning")' : '""'}`;
+    const finalDescription = `i18n("finalContent", "${finalLat.letter} ${finalLat.first}° "..string.format("%02d",math.floor(dontSteal/12)).."."..string.format("%03d",math.abs(math.fmod(goAndHaveFun-123+${latOffsetCode}, 1000))).."' ${finalLng.letter} ${finalLng.first}° "..string.format("%02d",math.floor(afterallItsAboutYouNotMe/42)).."."..string.format("%03d",math.abs(math.fmod(cheater+100+${lngOffsetCode},1000))).."'")..${hint ? `i18n("hintTitle") .. ": " .. i18n("hint")` : '""'}..${latOffset ? 'i18n("coordinatesCalculationWarning")' : '""'}`;
     const finalDescriptionFake = `"${fakeCoords}"`;
 
     return `require "Wherigo"
@@ -568,7 +570,6 @@ ${coverUrl ? 'wigoLove.Icon=objLoveCover' : ''}
 
 
 -- Zones --
-${zoneCode}
 
 objLoveZoneFinish = Wherigo.Zone(wigoLove)
 objLoveZoneFinish.Id = "ec6f16d3-4d67-4ab9-92ea-6c96452547c8"
@@ -593,12 +594,18 @@ objLoveZoneFinish.ProximityRangeUOM = "Meters"
 objLoveZoneFinish.OutOfRangeName = ""
 objLoveZoneFinish.InRangeName = ""
 
+
+${zoneCode}
+
+
+
 -- Items --
 objHowManyLeft = Wherigo.ZItem{
     Cartridge = wigoLove, 
     Container = Player
 }
 objHowManyLeft.Id = "accb593c-d43b-46d7-853b-9d7112bc36e1"
+objHowManyLeft.Name = [[Status]]
 objHowManyLeft.Description = ""
 objHowManyLeft.Visible = true
 objHowManyLeft.Commands = {}
@@ -637,7 +644,7 @@ objDescription = Wherigo.ZItem{
 }
 objDescription.Id = "416c01d5-a102-4916-9cbf-3cf464594b4a"
 objDescription.Visible = true
-objDescription.Icon = obj
+objDescription.Name = "Info"
 objDescription.Commands = {}
 objDescription.ObjectLocation = Wherigo.INVALID_ZONEPOINT
 objDescription.Locked = false
@@ -650,6 +657,7 @@ objCompletion = Wherigo.ZItem{
     Container = Player
 }
 objCompletion.Id = "76a53b31-e5f6-425d-8ed6-88082750cd84"
+objCompletion.Name = [[Completion Code]]
 objCompletion.Description = [[]]
 objCompletion.Visible = false
 objCompletion.ObjectLocation = Wherigo.INVALID_ZONEPOINT
@@ -665,7 +673,7 @@ ${taskCode}
 -- objPamatky = 15
 objPamatky = ${requiredPoints}
 objdead = true
-currentZone = "objLoveZone1"
+-- currentZone = "objLoveZone1"
 currentCharacter = "dummy"
 currentItem = "objHowManyLeft"
 --currentTask = "objLoveTask1"
@@ -677,7 +685,7 @@ wigoLove.ZVariables = {
     objPamatky = ${requiredPoints}, 
     objdead = true,
     ${variablesCode.join(",    \n")},
-    currentZone = "objLoveZone1", 
+--    currentZone = "objLoveZone1", 
     currentCharacter = "dummy", 
     currentItem = "objHowManyLeft", 
 --    currentTask = "objLoveTask1", 
@@ -724,9 +732,17 @@ function objHowManyLeft:OnClick()
         Text = i18n("howManyLeftContent", objPamatky), 
         ${coverUrl ? 'Media = objLoveCover,' : ''} 
         Callback = function(action)
-            if action ~= nil then
-                Wherigo.ShowScreen(Wherigo.MAINSCREEN)
-            end
+            Wherigo.ShowScreen(Wherigo.MAINSCREEN)
+        end
+    }
+end
+
+function objDescription:OnClick()
+    _Urwigo.MessageBox{
+        Text = i18n("description"), 
+        ${coverUrl ? 'Media = objLoveCover,' : ''} 
+        Callback = function(action)
+            Wherigo.ShowScreen(Wherigo.MAINSCREEN)
         end
     }
 end
@@ -762,6 +778,7 @@ end
 
 objFotohint = Wherigo.ZItem(wigoLove)
 objFotohint.Id = "47b8b44c-db97-4116-a743-cc129c7427ff"
+objFotohint.Name = [[Final]]
 objFotohint.Visible = true
 ${spoilerUrl ? 'objFotohint.Media = objLoveSpoiler' : ''}
 ${spoilerUrl ? 'objFotohint.Icon = objLoveSpoiler' : ''}

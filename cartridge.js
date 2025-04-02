@@ -64,7 +64,7 @@
     const fakeLngSecond = (finalLng.second + (Math.floor(Math.random() * 4) - 1)) % 60;
     const fakeLatThird = Math.floor(finalLat.third * Math.random() * 100) % 1000;
     const fakeLngThird = Math.floor(finalLng.third * Math.random() * 100) % 1000;
-    const fakeFinalOffset = Math.random() * 0.001 - 0.0005;
+    const fakeFinalOffset = Math.random() * 0.015 - 0.0075;
     let fakeCoords = `${finalLat.letter} ${finalLat.first} ${pad(fakeLatSecond, 2)}.${pad(fakeLatThird, 3)}`
     fakeCoords += ` ${finalLng.letter} ${finalLng.first} ${pad(fakeLngSecond, 2)}.${pad(fakeLngThird, 3)}`
 

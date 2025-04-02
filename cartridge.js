@@ -60,8 +60,8 @@
         return s.substring(s.length - size);
     };
 
-    const fakeLatSecond = (finalLat.second + (Math.floor(Math.random() * 4) - 2)) % 60;
-    const fakeLngSecond = (finalLng.second + (Math.floor(Math.random() * 4) - 2)) % 60;
+    const fakeLatSecond = (finalLat.second + (Math.floor(Math.random() * 4) - 1)) % 60;
+    const fakeLngSecond = (finalLng.second + (Math.floor(Math.random() * 4) - 1)) % 60;
     const fakeLatThird = Math.floor(finalLat.third * Math.random() * 100) % 1000;
     const fakeLngThird = Math.floor(finalLng.third * Math.random() * 100) % 1000;
     const fakeFinalOffset = Math.random() - 0.5;
@@ -588,7 +588,7 @@ objLoveZoneFinish.Points = {
     ZonePoint(${startCoordinates.lat + fakeFinalOffset + 0.00000001}, ${startCoordinates.lng + fakeFinalOffset + 0.00000001}, 0),
     ZonePoint(${startCoordinates.lat + fakeFinalOffset - 0.00000001}, ${startCoordinates.lng + fakeFinalOffset + 0.00000001}, 0)
 }
-objLoveZoneFinish.OriginalPoint = ZonePoint(50.05334182188759, 19.84133129298305, 0)
+objLoveZoneFinish.OriginalPoint = ZonePoint(${startCoordinates.lat + fakeFinalOffset}, ${startCoordinates.lng + fakeFinalOffset}, 0)
 objLoveZoneFinish.DistanceRangeUOM = "Feet"
 objLoveZoneFinish.ProximityRangeUOM = "Meters"
 objLoveZoneFinish.OutOfRangeName = ""
